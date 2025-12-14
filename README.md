@@ -1,179 +1,3 @@
-# 🎯 QR Redirect System - دليل التنصيب الشامل
-
-نظام احترافي لإدارة روابط QR مع لوحة تحكم كاملة
-
----
-
-## 📦 المتطلبات
-
-1. حساب GitHub (لاستضافة الملفات)
-2. حساب Firebase (مجاني)
-3. صورة QR ثابتة تشير إلى رابط GitHub Pages
-
----
-
-## 🔥 الخطوة 1: إعداد Firebase
-
-### 1.1 إنشاء المشروع
-
-1. اذهب إلى: https://console.firebase.google.com
-2. اضغط **"Add project"** (إضافة مشروع)
-3. اسم المشروع: `qr-redirect` (أو أي اسم تفضله)
-4. تعطيل Google Analytics (اختياري)
-5. اضغط **"Create project"**
-
-### 1.2 تفعيل Firestore Database
-
-1. من القائمة اليمنى → **"Firestore Database"**
-2. اضغط **"Create database"**
-3. اختر **"Start in production mode"**
-4. اختر الموقع الأقرب لك (مثل: `europe-west` أو `us-central`)
-5. اضغط **"Enable"**
-
-### 1.3 تفعيل Authentication
-
-1. من القائمة اليمنى → **"Authentication"**
-2. اضغط **"Get started"**
-3. اضغط على **"Google"** ثم **"Enable"**
-4. اختر Support Email (إيميلك)
-5. اضغط **"Save"**
-6. اضغط على **"Email/Password"** ثم **"Enable"**
-7. فعّل الخيار الأول فقط (Email/Password)
-8. اضغط **"Save"**
-
-### 1.4 الحصول على Firebase Configuration
-
-1. اضغط على أيقونة **الترس ⚙️** بجانب "Project Overview"
-2. اختر **"Project settings"**
-3. انزل إلى قسم **"Your apps"**
-4. اضغط على أيقونة **الويب `</>`**
-5. اسم التطبيق: `QR Redirect Web`
-6. **لا تفعل** Firebase Hosting (سنستخدم GitHub Pages)
-7. اضغط **"Register app"**
-8. انسخ كود `firebaseConfig` - سيكون بهذا الشكل:
-
-```javascript
-const firebaseConfig = {
-  apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXX",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:xxxxxxxxxxxxx"
-};
-```
-
-**⚠️ احتفظ بهذا الكود - ستحتاجه في الخطوة التالية!**
-
----
-
-## 🔒 الخطوة 2: إعداد قواعد الأمان
-
-### 2.1 Firestore Security Rules
-
-1. في Firebase Console → **Firestore Database**
-2. اذهب إلى تبويب **"Rules"**
-3. احذف كل المحتوى الموجود
-4. الصق القواعد من ملف `firestore.rules` الذي أعطيتك إياه
-5. **مهم جداً:** عدّل السطر التالي وضع إيميلك:
-
-```javascript
-request.auth.token.email in [
-  'your-email@gmail.com',  // ضع إيميلك هنا
-]
-```
-
-6. اضغط **"Publish"**
-
-### 2.2 إنشاء حساب مسؤول
-
-1. في Firebase Console → **Authentication**
-2. اضغط **"Add user"**
-3. أدخل إيميلك وكلمة مرور قوية
-4. اضغط **"Add user"**
-
-**✅ هذا هو الحساب الذي ستستخدمه للدخول إلى لوحة التحكم!**
-
----
-
-## 📁 الخطوة 3: إعداد GitHub Repository
-
-### 3.1 إنشاء Repository
-
-1. اذهب إلى: https://github.com/new
-2. اسم الـ Repository: `QR-Convert`
-3. اجعله **Public**
-4. لا تضف README أو .gitignore
-5. اضغط **"Create repository"**
-
-### 3.2 هيكل المجلد
-
-أنشئ مجلد `docs` في الـ Repository وضع فيه الملفات التالية:
-
-```
-QR-Convert/
-└── docs/
-    ├── index.html     (صفحة التحويل)
-    └── admin.html     (لوحة التحكم)
-```
-
-### 3.3 تعديل ملفات Firebase Config
-
-**في ملف `index.html`:**
-
-ابحث عن هذا الجزء (حوالي السطر 71):
-
-```javascript
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
-```
-
-استبدله بالـ `firebaseConfig` الذي نسخته من Firebase!
-
-**في ملف `admin.html`:**
-
-ابحث عن نفس الجزء (حوالي السطر 563) واستبدله أيضاً!
-
-### 3.4 رفع الملفات
-
-```bash
-# إذا كنت تستخدم Git من الكمبيوتر:
-git clone https://github.com/abosalehg-ui/QR-Convert.git
-cd QR-Convert
-mkdir docs
-# ضع الملفات في مجلد docs
-git add .
-git commit -m "Initial commit"
-git push
-```
-
-**أو ارفعها مباشرة من واجهة GitHub:**
-1. اذهب إلى Repository
-2. اضغط **"Add file"** → **"Upload files"**
-3. اسحب المجلد `docs` بكل محتوياته
-4. اضغط **"Commit changes"**
-
----
-
-## 🌐 الخطوة 4: تفعيل GitHub Pages
-
-1. اذهب إلى Repository الخاص بك
-2. اضغط **"Settings"** (الإعدادات)
-3. من القائمة اليمنى → **"Pages"**
-4. في قسم **"Source"**:
-   - Branch: `main` (أو `master`)
-   - Folder: `/docs`
-5. اضغط **"Save"**
-6. انتظر 2-3 دقائق
-7. سيظهر لك رابط: `https://abosalehg-ui.github.io/QR-Convert/`
-
----
 
 ## 🔗 الخطوة 5: إعداد روابط QR
 
