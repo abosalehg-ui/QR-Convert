@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // دالة للتحقق من المستخدم المسجل
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // دالة للتحقق من صاحب المشروع (ضع إيميلك هنا)
+    function isAdmin() {
+      return isAuthenticated() && 
+             request.auth.token.email in [
+               'your-email@gmail.com',  // ضع إيميلك الأساسي هنا
+               'second-email@gmail.com' // يمكنك إضافة إيميلات أخرى
+             ];
+    }
+    
+    // قواعد مجموعة الروابط
+    match /links/{linkId} {
+      // السماح بالقراءة للجميع (للتحويل من index.html)
+      allow read: if true;
+      
+      // السماح بالكتابة والتعديل والحذف للمسؤولين فقط
+      allow create, update, delete: if isAdmin();
+      
+      // قواعد مجموعة التاريخ الفرعية
+      match /history/{historyId} {
+        // القراءة للمسؤولين فقط
+        allow read: if isAdmin();
+        
+        // الكتابة للمسؤولين فقط
+        allow create: if isAdmin();
+        
+        // منع التعديل والحذف (الأرشيف لا يُعدل)
+        allow update, delete: if false;
+      }
+    }
+    
+    // منع الوصول لأي مجموعات أخرى
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

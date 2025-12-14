@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الصفحة غير موجودة - 404</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            overflow: hidden;
+        }
+
+        .error-container {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px;
+            animation: fadeIn 0.6s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .error-code {
+            font-size: 120px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .error-emoji {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: shake 3s infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% {
+                transform: rotate(0deg);
+            }
+            25% {
+                transform: rotate(-5deg);
+            }
+            75% {
+                transform: rotate(5deg);
+            }
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+
+        p {
+            font-size: 18px;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: white;
+            color: #667eea;
+            padding: 15px 35px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-outline:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .suggestions {
+            margin-top: 40px;
+            background: rgba(255,255,255,0.1);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .suggestions h3 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .suggestions ul {
+            list-style: none;
+            text-align: right;
+        }
+
+        .suggestions li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .suggestions li:last-child {
+            border-bottom: none;
+        }
+
+        .suggestions li:before {
+            content: "✓ ";
+            margin-left: 10px;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .error-code {
+                font-size: 80px;
+            }
+
+            .error-emoji {
+                font-size: 60px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            p {
+                font-size: 16px;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        .footer {
+            margin-top: 40px;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-emoji">🔍</div>
+        <div class="error-code">404</div>
+        <h1>عذراً! الصفحة غير موجودة</h1>
+        <p>الرابط الذي تبحث عنه غير موجود أو تم نقله إلى مكان آخر</p>
+
+        <div class="buttons">
+            <a href="/" class="btn">🏠 العودة للرئيسية</a>
+            <a href="/QR-Convert/admin.html" class="btn btn-outline">🎛️ لوحة التحكم</a>
+        </div>
+
+        <div class="suggestions">
+            <h3>💡 بعض الاقتراحات:</h3>
+            <ul>
+                <li>تحقق من صحة الرابط المُدخل</li>
+                <li>تأكد من أن الرابط مُفعّل في لوحة التحكم</li>
+                <li>الرابط قد يكون حساساً لحالة الأحرف (link1 ≠ Link1)</li>
+                <li>جرب إنشاء الرابط من لوحة التحكم أولاً</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>QR Redirect System • Powered by Firebase & GitHub Pages</p>
+        </div>
+    </div>
+
+    <script>
+        // تحليل بسيط لمعرفة الرابط المطلوب
+        const path = window.location.pathname;
+        console.log('المسار المطلوب:', path);
+        
+        // يمكن إضافة تتبع للروابط الخاطئة هنا
+        // مثلاً: إرسال لـ Google Analytics أو Firestore
+    </script>
+</body>
+</html>

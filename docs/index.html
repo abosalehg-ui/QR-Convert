@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جاري التحويل...</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+        .loader-container {
+            text-align: center;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .error {
+            background: #e74c3c;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="loader-container">
+        <div class="spinner"></div>
+        <h1>جاري التحويل...</h1>
+        <p id="status">يرجى الانتظار</p>
+    </div>
+
+    <script type="module">
+        // ضع Firebase Config هنا
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, doc, getDoc, updateDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function redirect() {
+            try {
+                // استخرج اسم الرابط من URL
+                const path = window.location.pathname;
+                const linkName = path.split('/').filter(p => p).pop() || 'main';
+                
+                document.getElementById('status').textContent = `جاري تحميل الرابط: ${linkName}`;
+
+                // جلب الرابط من Firestore
+                const linkDoc = await getDoc(doc(db, 'links', linkName));
+
+                if (linkDoc.exists() && linkDoc.data().active) {
+                    const data = linkDoc.data();
+                    
+                    // تحديث عداد النقرات
+                    await updateDoc(doc(db, 'links', linkName), {
+                        clicks: increment(1),
+                        lastClicked: new Date()
+                    });
+
+                    // التحويل للرابط الهدف
+                    window.location.href = data.url;
+                } else {
+                    showError('الرابط غير موجود أو غير مفعّل');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('حدث خطأ في تحميل الرابط');
+            }
+        }
+
+        function showError(message) {
+            document.body.innerHTML = `
+                <div class="error">
+                    <h1>⚠️ خطأ</h1>
+                    <p>${message}</p>
+                    <p style="margin-top: 10px; font-size: 14px;">يرجى التواصل مع المسؤول</p>
+                </div>
+            `;
+        }
+
+        // بدء التحويل
+        redirect();
+    </script>
+</body>
+</html>
