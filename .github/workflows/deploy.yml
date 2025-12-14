@@ -1,0 +1,49 @@
+# ملف اختياري لأتمتة النشر على GitHub Pages
+# يمكنك استخدامه إذا أردت نشر تلقائي عند كل تحديث
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # أو master حسب اسم الفرع الرئيسي
+
+  # يمكن تشغيله يدوياً أيضاً
+  workflow_dispatch:
+
+# إعطاء صلاحيات للـ workflow
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# السماح بتشغيل واحد فقط في نفس الوقت
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # وظيفة النشر
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # رفع مجلد docs
+          path: './docs'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
