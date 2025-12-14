@@ -12,7 +12,7 @@ service cloud.firestore {
       return isAuthenticated() && 
              request.auth.token.email in [
                'abo.saleh.g@gmail.com',  // ضع إيميلك الأساسي هنا
-               'second-email@gmail.com' // يمكنك إضافة إيميلات أخرى
+               'qr@nrrc.gov.sa' // يمكنك إضافة إيميلات أخرى
              ];
     }
     
