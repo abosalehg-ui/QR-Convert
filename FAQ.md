@@ -379,7 +379,11 @@ background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%);
 ✅ استخدمت كلمة مرور قوية
 ✅ فعّلت Google 2FA
 ✅ وضعت إيميلك فقط في Security Rules
-✅ لم تشارك Firebase Config علناً
+✅ بريد المسؤول مُفعَّل (Email verified) — بدون ذلك يكفي أن ينشئ أحدهم
+   حسابًا بكلمة مرور على بريدك ليحصل على صلاحياتك
+
+⚠️ ملاحظة: نشر Firebase Config علنًا **ليس** ثغرة — هذه القيم مصمَّمة
+للعمل في المتصفح والحماية كلها في Security Rules. راجع SECURITY.md.
 
 **نصيحة:** فعّل Two-Factor Authentication في Google
 

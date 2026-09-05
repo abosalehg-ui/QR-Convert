@@ -1,0 +1,19 @@
+{
+  "name": "qr-convert",
+  "version": "1.0.0",
+  "private": true,
+  "description": "نظام تحويل روابط QR قابلة للتحديث بعد الطباعة",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/link-utils.test.js",
+    "test:rules": "firebase emulators:exec --project qr-redirect-test --only firestore \"node --test tests/rules.test.js\"",
+    "test:all": "npm run test && npm run test:rules && npm run test:e2e",
+    "test:e2e": "firebase emulators:exec --project qr-redirect-2e522 --only firestore,auth \"node --test tests/e2e.test.js\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.4",
+    "firebase": "^10.14.1",
+    "firebase-tools": "^13.0.0",
+    "playwright": "^1.49.1"
+  }
+}

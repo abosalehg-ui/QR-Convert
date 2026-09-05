@@ -1,43 +1,85 @@
 rules_version = '2';
+
+// ============================================================================
+// قواعد أمان Firestore — هذه هي الحماية الفعلية الوحيدة للنظام.
+//
+// الموقع ثابت على GitHub Pages بلا خادم خاص، ومفتاح Firebase في الواجهة عام
+// بطبيعته (راجع SECURITY.md)، فكل ما لا يمنعه هذا الملف مسموح للجميع.
+//
+// ملاحظة: قائمة الإيميلات أدناه منشورة في مستودع عام. البديل الأنظف هو
+// Custom Claims (request.auth.token.admin == true) تُضبط من Firebase Admin
+// SDK ولا تظهر في المستودع إطلاقًا. حتى ذلك الحين: التحقق بخطوتين (2FA)
+// مفعّل إلزاميًا على هذه الحسابات.
+// ============================================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // دالة للتحقق من المستخدم المسجل
+
     function isAuthenticated() {
       return request.auth != null;
     }
-    
-    // دالة للتحقق من صاحب المشروع (ضع إيميلك هنا)
+
     function isAdmin() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
+             request.auth.token.email_verified == true &&
              request.auth.token.email in [
-               'your-email@gmail.com',  // ضع إيميلك الأساسي هنا
-               'second-email@gmail.com' // يمكنك إضافة إيميلات أخرى
+               'abo.saleh.g@gmail.com',
+               'qr@nrrc.gov.sa'
              ];
     }
-    
-    // قواعد مجموعة الروابط
+
+    // التحقق من صحة بيانات الرابط عند الكتابة.
+    // المتصفح ليس حدًا أمنيًا: قيود <input type="url"> و pattern يمكن تجاوزها
+    // بالكتابة على واجهة Firestore مباشرة، فالتحقق يتكرر هنا عمدًا (البند 5).
+    function isValidLink() {
+      let d = request.resource.data;
+      return d.url is string
+          && d.url.size() > 0 && d.url.size() < 2048
+          && d.url.matches('^https?://.*')
+          && d.description is string && d.description.size() < 500
+          && d.active is bool
+          && d.clicks is int && d.clicks >= 0;
+    }
+
+    // زيادة عدّاد النقرات من زائر غير مسجّل.
+    //
+    // بدون هذه القاعدة كانت كتابة العدّاد تُرفض، وصفحة التحويل تنتظرها بـ
+    // await، فتسقط في catch قبل تنفيذ التحويل — أي أن كل زائر يرى صفحة خطأ
+    // (البند 1). القاعدة تسمح بحقلي العدّاد فقط وبزيادة مقدارها واحد، فلا
+    // يستطيع الزائر تغيير الوجهة ولا تضخيم العدّاد دفعة واحدة.
+    function isClickIncrement() {
+      let d = request.resource.data;
+      return d.diff(resource.data).affectedKeys().hasOnly(['clicks', 'lastClicked'])
+          && d.clicks == resource.data.clicks + 1
+          && d.lastClicked == request.time;
+    }
+
     match /links/{linkId} {
-      // السماح بالقراءة للجميع (للتحويل من index.html)
+      // القراءة عامة لأن التحويل يتم من متصفح الزائر بلا مصادقة.
+      // البيانات الإدارية (من أنشأ الرابط) ليست هنا بل في meta/ أدناه (البند 7).
       allow read: if true;
-      
-      // السماح بالكتابة والتعديل والحذف للمسؤولين فقط
-      allow create, update, delete: if isAdmin();
-      
-      // قواعد مجموعة التاريخ الفرعية
+
+      allow create: if isAdmin() && isValidLink();
+      allow update: if isAdmin() && isValidLink();
+      allow update: if isClickIncrement();
+      allow delete: if isAdmin();
+
+      // البيانات الإدارية: إيميل من أنشأ الرابط ووقت الإنشاء.
+      // مفصولة عن المستند العام حتى لا تُكشف الإيميلات لأي شخص يقرأ
+      // مجموعة links عبر واجهة Firestore بالمفتاح العلني (البند 7).
+      match /meta/{metaId} {
+        allow read, write: if isAdmin();
+      }
+
+      // أرشيف التعديلات: سجل لا يُعدَّل ولا يُحذف.
       match /history/{historyId} {
-        // القراءة للمسؤولين فقط
         allow read: if isAdmin();
-        
-        // الكتابة للمسؤولين فقط
         allow create: if isAdmin();
-        
-        // منع التعديل والحذف (الأرشيف لا يُعدل)
         allow update, delete: if false;
       }
     }
-    
-    // منع الوصول لأي مجموعات أخرى
+
+    // كل ما عدا ذلك مرفوض صراحةً.
     match /{document=**} {
       allow read, write: if false;
     }

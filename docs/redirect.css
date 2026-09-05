@@ -1,0 +1,146 @@
+/* تنسيق صفحتَي التحويل: index.html (الجذر) و 404.html (الروابط الفرعية) */
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  color: #fff;
+}
+
+/* min-height لا height، وبلا overflow:hidden: المحتوى الطويل يجب أن يمرّر
+   على الشاشات القصيرة بدل أن يُقطع (البند 15) */
+.state {
+  text-align: center;
+  max-width: 600px;
+  width: 100%;
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.spinner {
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.state h1 {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+
+.state p {
+  font-size: 17px;
+  margin-bottom: 8px;
+}
+
+.error-emoji {
+  font-size: 72px;
+  margin-bottom: 10px;
+}
+
+.error-code {
+  font-size: 96px;
+  font-weight: bold;
+  line-height: 1;
+  margin-bottom: 16px;
+  text-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 28px;
+}
+
+.buttons .btn {
+  background: #fff;
+  color: var(--brand);
+  border-radius: 50px;
+  padding: 15px 35px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.buttons .btn:hover {
+  background: #f0f0f0;
+  color: var(--brand-dark);
+}
+
+.buttons .btn-outline {
+  background: transparent;
+  color: #fff;
+  border: 2px solid #fff;
+}
+
+.buttons .btn-outline:hover {
+  background: #fff;
+  color: var(--brand);
+}
+
+.suggestions {
+  margin-top: 36px;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 25px;
+  border-radius: var(--radius);
+  text-align: start;
+}
+
+.suggestions h2 {
+  font-size: 19px;
+  margin-bottom: 15px;
+}
+
+.suggestions ul {
+  list-style: none;
+}
+
+.suggestions li {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.suggestions li:last-child {
+  border-bottom: none;
+}
+
+.suggestions li::before {
+  content: '✓ ';
+  margin-inline-end: 10px;
+  font-weight: bold;
+}
+
+.footer {
+  margin-top: 36px;
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+@media (max-width: 768px) {
+  .error-code { font-size: 72px; }
+  .error-emoji { font-size: 56px; }
+  .state h1 { font-size: 22px; }
+  .buttons { flex-direction: column; }
+  .buttons .btn { width: 100%; }
+}
+
+/* عناصر الحالة تُخفى وتُظهر عبر السمة hidden لا عبر تعديل style مباشرة */
+[hidden] {
+  display: none !important;
+}
