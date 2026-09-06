@@ -10,6 +10,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const DOCS = path.join(HERE, '..', 'docs');
 
 const MIME = { '.html': 'text/html;charset=utf-8', '.js': 'text/javascript', '.css': 'text/css' };
+const FONT_HOSTS = /fonts\.(googleapis|gstatic)\.com/;
 
 export const PROJECT_ID = process.env.GCLOUD_PROJECT || 'qr-redirect-2e522';
 export const FIRESTORE_REST =
@@ -99,8 +100,13 @@ export async function openPage(browser, url, options = {}) {
 
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
   page.on('console', (m) => {
+    if (m.type() !== 'error') return;
     const text = m.text();
-    if (m.type() === 'error' && !/favicon|404 \(Not Found\)/.test(text)) errors.push(text);
+    if (/favicon|404 \(Not Found\)/.test(text)) return;
+    // خط Google تحسين تدريجي: الصفحة تعمل بمكدّس خطوط النظام إذا تعذّر
+    // تحميله (بيئة معزولة، حجب، انقطاع)، فلا يُحتسب فشله خطأ في الصفحة.
+    if (FONT_HOSTS.test(m.location()?.url || '')) return;
+    errors.push(text);
   });
 
   const vendor = process.env.PW_FIREBASE_VENDOR;

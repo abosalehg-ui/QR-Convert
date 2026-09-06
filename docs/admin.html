@@ -4,19 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex">
-    <!-- CSP: السكربتات من الموقع نفسه و Firebase SDK فقط (البند 12).
+    <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)">
+    <!-- CSP: السكربتات من الموقع نفسه و Firebase SDK فقط.
          connect-src تشمل خدمات المصادقة و Firestore، و frame-src تلزم
          لنافذة دخول Google المنبثقة.
          www.google.com في img-src يلزم لصورة فحص الاتصال التي يحمّلها نقل
-         Firestore (WebChannel) — بدونها تُسجَّل مخالفة CSP عند كل زيارة.
-         عناوين 127.0.0.1 مسموح بها للاتصال بمحاكي Firebase أثناء التطوير
-         المحلي فقط — لا يمكن لموقع خارجي استغلالها.
+         Firestore (WebChannel).
+         عناوين 127.0.0.1 مسموح بها للاتصال بمحاكي Firebase أثناء التطوير فقط.
          ملاحظة: frame-ancestors تحتاج ترويسة خادم ولا تعمل من وسم meta،
          وGitHub Pages لا يسمح بترويسات مخصصة. -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' https://www.gstatic.com https://apis.google.com;
-        style-src 'self';
+        style-src 'self' https://fonts.googleapis.com;
+        font-src https://fonts.gstatic.com;
         img-src 'self' data: https://www.google.com https://*.googleusercontent.com;
         connect-src https://*.googleapis.com https://*.firebaseio.com
                     https://securetoken.googleapis.com
@@ -25,124 +27,251 @@
         frame-src https://qr-redirect-2e522.firebaseapp.com https://accounts.google.com;
         base-uri 'none';
         form-action 'none'">
-    <title>لوحة التحكم - QR Redirect</title>
+    <title>لوحة التحكم — QR Redirect</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
     <link rel="stylesheet" href="./shared.css">
     <link rel="stylesheet" href="./admin.css">
 </head>
 <body>
+    <!-- مستودع الأيقونات: رموز SVG يُشار إليها بـ <use> من HTML ومن JS.
+         بدل الإيموجي: حجم ولون متسقان، وتتبع لون النص في الوضعين. -->
+    <svg class="sprite" aria-hidden="true">
+        <symbol id="i-qr" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM21 14v3M18 21h3M14 21h1"/>
+        </symbol>
+        <symbol id="i-lock" viewBox="0 0 24 24">
+            <rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+        </symbol>
+        <symbol id="i-shield-off" viewBox="0 0 24 24">
+            <path d="M12 3 4 6v6c0 5 3.4 8.4 8 9 4.6-.6 8-4 8-9V6Z"/><path d="m9 12 6-4M15 12 9 8"/>
+        </symbol>
+        <symbol id="i-mail" viewBox="0 0 24 24">
+            <rect x="2" y="5" width="20" height="14" rx="2"/><path d="m2 7 10 6 10-6"/>
+        </symbol>
+        <!-- أيقونة محايدة لا شعار Google: رسم شعار تقريبي بخطوط
+             يظهر مشوّهًا ويوحي بانتماء غير صحيح -->
+        <symbol id="i-user" viewBox="0 0 24 24">
+            <circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>
+        </symbol>
+        <symbol id="i-logout" viewBox="0 0 24 24">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+        </symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+        <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+        <symbol id="i-edit" viewBox="0 0 24 24">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z"/>
+        </symbol>
+        <symbol id="i-history" viewBox="0 0 24 24">
+            <path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>
+        </symbol>
+        <symbol id="i-pause" viewBox="0 0 24 24"><path d="M10 4v16M14 4v16"/></symbol>
+        <symbol id="i-play" viewBox="0 0 24 24"><path d="M6 4l14 8-14 8Z"/></symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24">
+            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/>
+        </symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24">
+            <rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </symbol>
+        <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+        <symbol id="i-link" viewBox="0 0 24 24">
+            <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/>
+            <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"/>
+        </symbol>
+        <symbol id="i-cursor" viewBox="0 0 24 24">
+            <path d="m3 3 7.5 18 2.5-7.5L20.5 11Z"/>
+        </symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+        <symbol id="i-calendar" viewBox="0 0 24 24">
+            <rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>
+        </symbol>
+        <symbol id="i-inbox" viewBox="0 0 24 24">
+            <path d="M3 12h5l2 3h4l2-3h5"/><path d="M5 5h14l2 7v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7Z"/>
+        </symbol>
+        <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
+        <symbol id="i-alert" viewBox="0 0 24 24">
+            <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/>
+        </symbol>
+    </svg>
+
     <!-- حالة الإقلاع: تظهر حتى ترد Firebase بحالة المصادقة، فلا تكون
          الصفحة بيضاء فارغة إذا تأخّر تحميل SDK أو فشل -->
-    <p class="login-container" id="bootState" role="status">جارٍ التحميل…</p>
+    <div class="auth" id="bootState" role="status">
+        <div class="auth-card is-centered">جارٍ التحميل…</div>
+    </div>
 
     <!-- ===================== شاشة الدخول ===================== -->
-    <main class="login-container" id="loginContainer" hidden>
-        <h1>🔐 تسجيل الدخول</h1>
+    <main class="auth" id="loginContainer" hidden>
+        <div class="auth-card">
+            <span class="auth-mark" aria-hidden="true">
+                <svg class="icon icon-lg"><use href="#i-lock"/></svg>
+            </span>
+            <h1>تسجيل الدخول</h1>
+            <p class="hint">لوحة تحكم روابط QR — للمسؤولين فقط.</p>
 
-        <p class="alert error" id="loginError" role="alert" hidden></p>
+            <p class="alert error" id="loginError" role="alert" hidden></p>
 
-        <button type="button" class="login-btn google-btn" id="googleLoginBtn">
-            📧 الدخول بحساب Google
-        </button>
+            <div class="auth-actions">
+                <button type="button" class="btn btn-ghost btn-block" id="googleLoginBtn">
+                    <svg class="icon" aria-hidden="true"><use href="#i-user"/></svg>
+                    المتابعة بحساب Google
+                </button>
 
-        <!-- الزر يفتح نموذجًا ولا يسجّل الدخول بنفسه، فاسمه يقول ذلك
-             ويحمل aria-expanded ليعرف قارئ الشاشة حالته -->
-        <button type="button" class="login-btn email-btn" id="toggleEmailFormBtn"
-                aria-expanded="false" aria-controls="emailForm">
-            ✉️ الدخول بالبريد الإلكتروني ▾
-        </button>
+                <!-- الزر يفتح نموذجًا ولا يسجّل الدخول بنفسه، فاسمه يقول ذلك
+                     ويحمل aria-expanded ليعرف قارئ الشاشة حالته -->
+                <button type="button" class="btn btn-ghost btn-block" id="toggleEmailFormBtn"
+                        aria-expanded="false" aria-controls="emailForm">
+                    <svg class="icon" aria-hidden="true"><use href="#i-mail"/></svg>
+                    المتابعة بالبريد الإلكتروني
+                </button>
+            </div>
 
-        <form class="email-form" id="emailForm" hidden>
-            <label class="sr-only" for="emailInput">البريد الإلكتروني</label>
-            <input type="email" id="emailInput" autocomplete="username"
-                   placeholder="البريد الإلكتروني" required>
-
-            <label class="sr-only" for="passwordInput">كلمة المرور</label>
-            <input type="password" id="passwordInput" autocomplete="current-password"
-                   placeholder="كلمة المرور" required>
-
-            <button type="submit" class="login-btn email-btn" id="emailLoginBtn">دخول</button>
-        </form>
+            <form id="emailForm" hidden>
+                <div class="auth-sep">أدخل بياناتك</div>
+                <div class="field">
+                    <label for="emailInput">البريد الإلكتروني</label>
+                    <input type="email" id="emailInput" autocomplete="username"
+                           placeholder="name@example.com" required>
+                </div>
+                <div class="field">
+                    <label for="passwordInput">كلمة المرور</label>
+                    <input type="password" id="passwordInput" autocomplete="current-password"
+                           placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-block" id="emailLoginBtn">دخول</button>
+            </form>
+        </div>
     </main>
 
     <!-- ===================== لا تملك صلاحية ===================== -->
-    <main class="login-container" id="deniedContainer" hidden>
-        <h1>🚫 لا تملك صلاحية</h1>
-        <p>الحساب <strong id="deniedEmail"></strong> ليس ضمن قائمة المسؤولين.</p>
-        <p class="field-hint">
-            إذا كان هذا حسابك كمسؤول، تأكد من إضافة بريدك في
-            <code>firestore.rules</code> ومن نشر القواعد، ومن تفعيل بريدك
-            (Email verified) في Firebase Authentication.
-        </p>
-        <button type="button" class="login-btn email-btn" id="deniedLogoutBtn">
-            تسجيل الخروج
-        </button>
+    <main class="auth" id="deniedContainer" hidden>
+        <div class="auth-card">
+            <span class="auth-mark auth-mark-danger" aria-hidden="true">
+                <svg class="icon icon-lg"><use href="#i-shield-off"/></svg>
+            </span>
+            <h1>لا تملك صلاحية</h1>
+            <p class="hint">الحساب <strong id="deniedEmail"></strong> ليس ضمن قائمة المسؤولين.</p>
+
+            <p class="hint auth-note">
+                إذا كان هذا حسابك كمسؤول، تأكد من إضافة بريدك في <code>firestore.rules</code>
+                ومن نشر القواعد، ومن تفعيل بريدك (Email verified) في Firebase Authentication.
+            </p>
+
+            <button type="button" class="btn btn-ghost btn-block push-top" id="deniedLogoutBtn">
+                <svg class="icon" aria-hidden="true"><use href="#i-logout"/></svg>
+                تسجيل الخروج
+            </button>
+        </div>
     </main>
 
     <!-- ===================== اللوحة ===================== -->
-    <div class="dashboard" id="dashboard" hidden>
-        <header class="header">
-            <h1>🎯 لوحة تحكم QR Redirect</h1>
-            <div class="user-info">
-                <span id="userEmail"></span>
-                <button type="button" class="logout-btn" id="logoutBtn">تسجيل الخروج</button>
+    <div id="dashboard" hidden>
+        <header class="topbar">
+            <div class="topbar-inner">
+                <div class="brand">
+                    <span class="brand-mark" aria-hidden="true">
+                        <svg class="icon"><use href="#i-qr"/></svg>
+                    </span>
+                    <div>
+                        <h1>QR Redirect</h1>
+                        <div class="hint">لوحة التحكم</div>
+                    </div>
+                </div>
+                <span class="who" id="userEmail"></span>
+                <button type="button" class="btn btn-ghost" id="logoutBtn">
+                    <svg class="icon" aria-hidden="true"><use href="#i-logout"/></svg>
+                    خروج
+                </button>
             </div>
         </header>
 
-        <!-- role="alert" يجعل قارئ الشاشة يعلن النتيجة فورًا (البند 10) -->
+        <main class="page">
+            <section class="stats" aria-label="إحصائيات">
+                <div class="stat">
+                    <span class="stat-icon" aria-hidden="true"><svg class="icon"><use href="#i-cursor"/></svg></span>
+                    <div>
+                        <div class="stat-number" id="totalClicks">0</div>
+                        <div class="stat-label">إجمالي النقرات</div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <span class="stat-icon" aria-hidden="true"><svg class="icon"><use href="#i-link"/></svg></span>
+                    <div>
+                        <div class="stat-number" id="totalLinks">0</div>
+                        <div class="stat-label">عدد الروابط</div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <span class="stat-icon" aria-hidden="true"><svg class="icon"><use href="#i-check-circle"/></svg></span>
+                    <div>
+                        <div class="stat-number" id="activeLinks">0</div>
+                        <div class="stat-label">روابط نشطة</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-head">
+                    <svg class="icon tint-accent" aria-hidden="true"><use href="#i-plus"/></svg>
+                    <h2>إضافة رابط جديد</h2>
+                </div>
+                <div class="card-body">
+                    <form id="addLinkForm">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="newLinkName">اسم الرابط</label>
+                                <input type="text" id="newLinkName" placeholder="link1" required
+                                       pattern="[a-zA-Z0-9_\-]+" inputmode="latin"
+                                       aria-describedby="newLinkNameHint" dir="ltr">
+                                <small class="hint" id="newLinkNameHint">
+                                    العنوان النهائي: <code>…/QR-Convert/<span id="linkPreview">link1</span></code><br>
+                                    حروف إنجليزية وأرقام وشرطتان فقط.
+                                    <strong>لا يمكن تغيير الاسم بعد الإنشاء</strong> لأنه معرّف الرابط
+                                    في قاعدة البيانات، وأي رمز QR مطبوع يعتمد عليه.
+                                </small>
+                            </div>
+
+                            <div class="field">
+                                <label for="newLinkUrl">الرابط الهدف</label>
+                                <input type="url" id="newLinkUrl" placeholder="https://example.com" required
+                                       aria-describedby="newLinkUrlHint" dir="ltr">
+                                <small class="hint" id="newLinkUrlHint">يجب أن يبدأ بـ http:// أو https://</small>
+                            </div>
+
+                            <div class="field span-2">
+                                <label for="newLinkDesc">الوصف</label>
+                                <textarea id="newLinkDesc" placeholder="وصف اختياري يساعدك على تمييز الرابط لاحقًا"
+                                          maxlength="499"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn" id="addLinkBtn">
+                                <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>
+                                إضافة الرابط
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-head">
+                    <svg class="icon tint-accent" aria-hidden="true"><use href="#i-list"/></svg>
+                    <h2>الروابط</h2>
+                </div>
+                <div class="links" id="linksList"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- التنبيهات تطفو أسفل الشاشة فلا تزيح المحتوى عند ظهورها -->
+    <div class="alerts">
         <p class="alert success" id="successAlert" role="alert" hidden></p>
         <p class="alert error" id="errorAlert" role="alert" hidden></p>
-
-        <section class="cards-container" aria-label="إحصائيات">
-            <div class="stat-card">
-                <div class="stat-number" id="totalClicks">0</div>
-                <div class="stat-label">إجمالي النقرات</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="totalLinks">0</div>
-                <div class="stat-label">عدد الروابط</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="activeLinks">0</div>
-                <div class="stat-label">روابط نشطة</div>
-            </div>
-        </section>
-
-        <section class="card">
-            <h2>➕ إضافة رابط جديد</h2>
-            <form id="addLinkForm">
-                <div class="form-group">
-                    <label for="newLinkName">اسم الرابط (سيظهر في العنوان)</label>
-                    <input type="text" id="newLinkName" placeholder="مثال: link1" required
-                           pattern="[a-zA-Z0-9_\-]+" inputmode="latin"
-                           aria-describedby="newLinkNameHint">
-                    <small class="field-hint" id="newLinkNameHint">
-                        سيكون الرابط: <code>https://abosalehg-ui.github.io/QR-Convert/<span id="linkPreview">link1</span></code>
-                        — حروف إنجليزية وأرقام وشرطتان فقط.
-                        <strong>لا يمكن تغيير الاسم بعد الإنشاء</strong> لأنه معرّف الرابط في قاعدة البيانات،
-                        وأي رمز QR مطبوع عليه يعتمد عليه.
-                    </small>
-                </div>
-
-                <div class="form-group">
-                    <label for="newLinkUrl">الرابط الهدف</label>
-                    <input type="url" id="newLinkUrl" placeholder="https://example.com" required
-                           aria-describedby="newLinkUrlHint">
-                    <small class="field-hint" id="newLinkUrlHint">يجب أن يبدأ بـ http:// أو https://</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="newLinkDesc">الوصف</label>
-                    <textarea id="newLinkDesc" placeholder="وصف اختياري للرابط" maxlength="499"></textarea>
-                </div>
-
-                <button type="submit" class="btn" id="addLinkBtn">إضافة الرابط</button>
-            </form>
-        </section>
-
-        <section class="card">
-            <h2>📋 قائمة الروابط</h2>
-            <div id="linksList"></div>
-        </section>
     </div>
 
     <!-- ===================== نافذة التعديل ===================== -->
@@ -150,22 +279,27 @@
          aria-labelledby="editModalTitle">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="editModalTitle">✏️ تعديل الرابط <span id="editLinkName"></span></h2>
-                <button type="button" class="close-modal" data-close-modal="editModal"
-                        aria-label="إغلاق نافذة التعديل">&times;</button>
+                <svg class="icon tint-accent" aria-hidden="true"><use href="#i-edit"/></svg>
+                <h2 id="editModalTitle">تعديل <span id="editLinkName" class="link-name"></span></h2>
+                <button type="button" class="btn-icon" data-close-modal="editModal"
+                        aria-label="إغلاق نافذة التعديل">
+                    <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+                </button>
             </div>
-            <form id="editLinkForm">
+            <form id="editLinkForm" class="modal-form">
                 <input type="hidden" id="editLinkId">
-                <div class="form-group">
+                <div class="field">
                     <label for="editLinkUrl">الرابط الهدف</label>
-                    <input type="url" id="editLinkUrl" required>
+                    <input type="url" id="editLinkUrl" required dir="ltr">
                 </div>
-                <div class="form-group">
+                <div class="field">
                     <label for="editLinkDesc">الوصف</label>
                     <textarea id="editLinkDesc" maxlength="499"></textarea>
                 </div>
-                <p class="field-hint">ستُحفظ الوجهة الحالية في الأرشيف قبل استبدالها.</p>
-                <button type="submit" class="btn" id="editLinkBtn">حفظ التعديلات</button>
+                <p class="hint">ستُحفظ الوجهة الحالية في الأرشيف قبل استبدالها.</p>
+                <div class="modal-actions">
+                    <button type="submit" class="btn" id="editLinkBtn">حفظ التعديلات</button>
+                </div>
             </form>
         </div>
     </div>
@@ -175,9 +309,12 @@
          aria-labelledby="historyModalTitle">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="historyModalTitle">📚 أرشيف التعديلات</h2>
-                <button type="button" class="close-modal" data-close-modal="historyModal"
-                        aria-label="إغلاق نافذة الأرشيف">&times;</button>
+                <svg class="icon tint-accent" aria-hidden="true"><use href="#i-history"/></svg>
+                <h2 id="historyModalTitle">أرشيف التعديلات</h2>
+                <button type="button" class="btn-icon" data-close-modal="historyModal"
+                        aria-label="إغلاق نافذة الأرشيف">
+                    <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+                </button>
             </div>
             <div id="historyList"></div>
         </div>
@@ -188,14 +325,16 @@
          aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
         <div class="modal-content">
             <div class="modal-header">
+                <svg class="icon tint-danger" aria-hidden="true"><use href="#i-alert"/></svg>
                 <h2 id="confirmTitle"></h2>
-                <button type="button" class="close-modal" data-close-modal="confirmModal"
-                        aria-label="إلغاء">&times;</button>
+                <button type="button" class="btn-icon" data-close-modal="confirmModal" aria-label="إلغاء">
+                    <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+                </button>
             </div>
-            <p id="confirmMessage"></p>
-            <div class="link-actions">
-                <button type="button" class="btn" id="confirmNo">إلغاء</button>
-                <button type="button" class="btn btn-danger" id="confirmYes">نعم، احذف</button>
+            <p class="hint" id="confirmMessage"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-ghost" id="confirmNo">إلغاء</button>
+                <button type="button" class="btn btn-danger-solid" id="confirmYes">نعم، احذف</button>
             </div>
         </div>
     </div>

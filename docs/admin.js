@@ -74,33 +74,49 @@ function humanError(error) {
 let successTimer;
 let errorTimer;
 
+function fillAlert(node, iconName, message) {
+  node.replaceChildren(icon(iconName), el('span', null, message));
+  node.hidden = false;
+}
+
 function showSuccess(message) {
-  const el = $('successAlert');
-  el.textContent = '✅ ' + message;
-  el.hidden = false;
+  const node = $('successAlert');
+  fillAlert(node, 'check-circle', message);
   clearTimeout(successTimer);
-  successTimer = setTimeout(() => { el.hidden = true; }, 4000);
+  successTimer = setTimeout(() => { node.hidden = true; }, 4000);
 }
 
 function showError(message) {
-  const el = $('errorAlert');
-  el.textContent = '❌ ' + message;
-  el.hidden = false;
+  const node = $('errorAlert');
+  fillAlert(node, 'alert', message);
   clearTimeout(errorTimer);
-  errorTimer = setTimeout(() => { el.hidden = true; }, 8000);
+  errorTimer = setTimeout(() => { node.hidden = true; }, 8000);
 }
 
-/** يعطّل زرًا ويستبدل نصه أثناء تنفيذ عملية، ثم يعيده كما كان. */
+/**
+ * يعطّل زرًا أثناء تنفيذ عملية ويشير إلى انشغاله، ثم يعيده كما كان.
+ *
+ * يستبدل العقدة النصية وحدها لا محتوى الزر كله، وإلا اختفت الأيقونة.
+ * الأزرار التي لا نص فيها تكتفي بنبض الأيقونة عبر الصنف is-busy.
+ */
 async function withBusy(button, busyLabel, task) {
   if (!button) return task();
-  const original = button.textContent;
+
+  const textNode = [...button.childNodes].find(
+    (node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim()
+  );
+  const original = textNode ? textNode.textContent : null;
+
   button.disabled = true;
-  button.textContent = busyLabel;
+  button.classList.add('is-busy');
+  if (textNode && busyLabel) textNode.textContent = ` ${busyLabel} `;
+
   try {
     return await task();
   } finally {
     button.disabled = false;
-    button.textContent = original;
+    button.classList.remove('is-busy');
+    if (textNode) textNode.textContent = original;
   }
 }
 
@@ -218,9 +234,7 @@ $('logoutBtn').addEventListener('click', async () => {
 $('deniedLogoutBtn').addEventListener('click', () => signOut(auth));
 
 function showLoginError(message) {
-  const el = $('loginError');
-  el.textContent = '❌ ' + message;
-  el.hidden = false;
+  fillAlert($('loginError'), 'alert', message);
 }
 
 // ---------------------------------------------------------------------------
@@ -263,12 +277,32 @@ function el(tag, className, text) {
   return node;
 }
 
-function actionButton(label, ariaLabel, action, linkId, extraClass) {
-  const button = el('button', `btn ${extraClass || ''}`.trim(), label);
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+/**
+ * أيقونة من مستودع الرموز في أعلى الصفحة.
+ * أُخذت مكان الإيموجي: حجم ولون متسقان عبر الأنظمة، وتتبع لون النص
+ * في الوضعين الفاتح والداكن.
+ */
+function icon(name, className = 'icon') {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('class', className);
+  svg.setAttribute('aria-hidden', 'true');
+  const use = document.createElementNS(SVG_NS, 'use');
+  use.setAttribute('href', `#i-${name}`);
+  svg.append(use);
+  return svg;
+}
+
+/** زر أيقونة بلا نص مرئي — التسمية لقارئ الشاشة عبر aria-label. */
+function actionButton(iconName, ariaLabel, action, linkId, extraClass) {
+  const button = el('button', `btn-icon ${extraClass || ''}`.trim());
   button.type = 'button';
+  button.title = ariaLabel;
   button.setAttribute('aria-label', ariaLabel);
   button.dataset.action = action;
   button.dataset.linkId = linkId;
+  button.append(icon(iconName));
   return button;
 }
 
@@ -277,7 +311,9 @@ function renderLinks(snapshot) {
   list.replaceChildren();
 
   if (snapshot.empty) {
-    list.append(el('p', 'empty-state', 'لا توجد روابط بعد'));
+    const empty = el('div', 'empty-state');
+    empty.append(icon('inbox'), el('p', null, 'لا توجد روابط بعد. أضف أول رابط من النموذج أعلاه.'));
+    list.append(empty);
     return;
   }
 
@@ -290,46 +326,60 @@ function renderLinks(snapshot) {
 
     const item = el('div', 'link-item');
 
+    // ---- الترويسة: الاسم، الحالة، ثم أزرار الإجراءات ----
     const header = el('div', 'link-header');
     header.append(el('span', 'link-name', linkId));
     header.append(el(
       'span',
-      `link-status ${data.active ? 'active' : 'inactive'}`,
-      data.active ? '🟢 نشط' : '🔴 غير نشط'
+      `badge ${data.active ? 'badge-ok' : 'badge-off'}`,
+      data.active ? 'نشط' : 'معطَّل'
     ));
+
+    const actions = el('div', 'link-actions');
+    actions.append(actionButton('edit', `تعديل الرابط ${linkId}`, 'edit', linkId));
+    actions.append(actionButton('history', `عرض أرشيف تعديلات ${linkId}`, 'history', linkId));
+    actions.append(actionButton(
+      data.active ? 'pause' : 'play',
+      `${data.active ? 'تعطيل' : 'تفعيل'} الرابط ${linkId}`,
+      'toggle',
+      linkId
+    ));
+    actions.append(actionButton('trash', `حذف الرابط ${linkId}`, 'delete', linkId));
+    header.append(actions);
     item.append(header);
 
+    // ---- العنوان القصير مع زر نسخه ----
     const urlRow = el('div', 'link-url');
-    const copyBtn = el('button', 'copy-btn', '📋 نسخ');
+    const copyBtn = el('button', 'btn-icon');
     copyBtn.type = 'button';
+    copyBtn.title = `نسخ رابط ${linkId}`;
     copyBtn.setAttribute('aria-label', `نسخ رابط ${linkId}`);
     copyBtn.dataset.action = 'copy';
     copyBtn.dataset.value = fullUrl;
+    copyBtn.append(icon('copy'));
     urlRow.append(copyBtn, el('span', null, fullUrl));
     item.append(urlRow);
 
-    item.append(el('div', 'link-target', `↗️ الوجهة: ${data.url || '—'}`));
-    item.append(el('div', 'link-desc', data.description || 'لا يوجد وصف'));
+    // ---- الوجهة والوصف ----
+    const target = el('div', 'link-target');
+    target.append(icon('link'), el('span', null, data.url || '—'));
+    item.append(target);
 
+    if (data.description) item.append(el('div', 'link-desc', data.description));
+
+    // ---- الإحصائيات ----
     const stats = el('div', 'link-stats');
-    stats.append(el('span', null, `👆 النقرات: ${(data.clicks || 0).toLocaleString(LOCALE)}`));
-    stats.append(el('span', null, `📅 آخر نقرة: ${formatTimestamp(data.lastClicked, 'لم يتم النقر بعد')}`));
-    stats.append(el('span', null, `⏰ تم الإنشاء: ${formatTimestamp(data.createdAt)}`));
+    const clicks = el('span');
+    clicks.append(icon('cursor'), el('span', null,
+      `${(data.clicks || 0).toLocaleString(LOCALE)} نقرة`));
+    const last = el('span');
+    last.append(icon('clock'), el('span', null,
+      `آخر نقرة: ${formatTimestamp(data.lastClicked, 'لا شيء بعد')}`));
+    const created = el('span');
+    created.append(icon('calendar'), el('span', null,
+      `تم الإنشاء: ${formatTimestamp(data.createdAt)}`));
+    stats.append(clicks, last, created);
     item.append(stats);
-
-    const actions = el('div', 'link-actions');
-    actions.append(actionButton('✏️ تعديل', `تعديل الرابط ${linkId}`, 'edit', linkId));
-    actions.append(actionButton('📚 الأرشيف', `عرض أرشيف تعديلات ${linkId}`, 'history', linkId, 'btn-info'));
-    actions.append(actionButton(
-      data.active ? '⏸️ تعطيل' : '▶️ تفعيل',
-      `${data.active ? 'تعطيل' : 'تفعيل'} الرابط ${linkId}`,
-      'toggle',
-      linkId,
-      data.active ? 'btn-danger' : 'btn-success'
-    ));
-    const del = actionButton('🗑️ حذف', `حذف الرابط ${linkId}`, 'delete', linkId, 'btn-danger');
-    actions.append(del);
-    item.append(actions);
 
     list.append(item);
   });
@@ -499,7 +549,7 @@ async function deleteLink(linkId, button) {
 
 async function openHistoryModal(linkId, trigger) {
   const list = $('historyList');
-  list.replaceChildren(el('p', 'empty-state', 'جارٍ التحميل…'));
+  list.replaceChildren(el('div', 'empty-state', 'جارٍ التحميل…'));
   openModal('historyModal', trigger);
 
   try {
@@ -510,7 +560,9 @@ async function openHistoryModal(linkId, trigger) {
     list.replaceChildren();
 
     if (snapshot.empty) {
-      list.append(el('p', 'empty-state', 'لا يوجد تاريخ تعديلات'));
+      const empty = el('div', 'empty-state');
+      empty.append(icon('history'), el('p', null, 'لا توجد تعديلات سابقة على هذا الرابط.'));
+      list.append(empty);
       return;
     }
 
@@ -518,13 +570,13 @@ async function openHistoryModal(linkId, trigger) {
       const data = docSnap.data();
       const item = el('div', 'history-item');
       item.append(el('div', 'history-date',
-        `📅 ${formatTimestamp(data.changedAt)} — بواسطة: ${data.changedBy || '—'}`));
-      item.append(el('div', 'history-url', `🔗 الوجهة السابقة: ${data.url || '—'}`));
-      item.append(el('div', 'link-desc', `📝 ${data.description || 'لا يوجد وصف'}`));
+        `${formatTimestamp(data.changedAt)} — بواسطة ${data.changedBy || '—'}`));
+      item.append(el('div', 'history-url', data.url || '—'));
+      if (data.description) item.append(el('div', 'link-desc', data.description));
       list.append(item);
     });
   } catch (error) {
-    list.replaceChildren(el('p', 'empty-state', 'فشل تحميل الأرشيف: ' + humanError(error)));
+    list.replaceChildren(el('div', 'empty-state', 'فشل تحميل الأرشيف: ' + humanError(error)));
   }
 }
 

@@ -1,35 +1,66 @@
-/* تنسيق صفحتَي التحويل: index.html (الجذر) و 404.html (الروابط الفرعية) */
+/* صفحتا التحويل: index.html (الجذر) و 404.html (الروابط الفرعية).
+   لوحة داكنة ثابتة — الصفحة لحظية ولا ينبغي أن تومض بين وضعين. */
 
 body {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  color: #fff;
+  display: grid;
+  place-items: center;
+  padding: var(--s5);
+  background: #0b0d12;
+  color: #eef1f6;
+  min-height: 100dvh;
+  position: relative;
+  overflow-x: hidden;
 }
 
-/* min-height لا height، وبلا overflow:hidden: المحتوى الطويل يجب أن يمرّر
-   على الشاشات القصيرة بدل أن يُقطع (البند 15) */
+/* هالة لونية خفيفة خلف المحتوى بدل التدرّج الممتلئ */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::before {
+  background: #4f46e5;
+  top: -220px;
+  inset-inline-start: -160px;
+}
+
+body::after {
+  background: #0e7490;
+  bottom: -260px;
+  inset-inline-end: -180px;
+}
+
 .state {
-  text-align: center;
-  max-width: 600px;
+  position: relative;
+  z-index: 1;
   width: 100%;
-  animation: fadeIn 0.5s ease-in;
+  max-width: 460px;
+  text-align: center;
+  animation: rise 0.4s var(--ease) both;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
 }
+
+/* ------------------------------ التحميل ------------------------------ */
 
 .spinner {
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
+  width: 34px;
+  height: 34px;
+  margin: 0 auto var(--s5);
   border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 20px;
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  border-top-color: #fff;
+  animation: spin 0.7s linear infinite;
 }
 
 @keyframes spin {
@@ -37,110 +68,126 @@ body {
 }
 
 .state h1 {
-  font-size: 28px;
-  margin-bottom: 12px;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: var(--s2);
 }
 
 .state p {
-  font-size: 17px;
-  margin-bottom: 8px;
+  color: #a8b0bf;
+  font-size: 14.5px;
 }
 
-.error-emoji {
-  font-size: 72px;
-  margin-bottom: 10px;
+/* ------------------------------ الفشل ------------------------------ */
+
+/* بطاقة زجاجية تفصل حالة الفشل عن الخلفية بلا صندوق ثقيل */
+#failure {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: var(--s6) var(--s5);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-lg);
 }
 
-.error-code {
-  font-size: 96px;
-  font-weight: bold;
-  line-height: 1;
-  margin-bottom: 16px;
-  text-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+.failure-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: var(--s4);
+  border-radius: var(--r-md);
+  background: rgba(242, 100, 107, 0.12);
+  color: #f2646b;
+}
+
+.failure-mark .icon {
+  width: 26px;
+  height: 26px;
+}
+
+.code {
+  display: block;
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.24em;
+  color: #6b7484;
+  margin-bottom: var(--s3);
+}
+
+#failure-message {
+  color: #d5dae4;
+  margin-bottom: var(--s2);
 }
 
 .buttons {
   display: flex;
-  gap: 15px;
+  gap: var(--s3);
   justify-content: center;
   flex-wrap: wrap;
-  margin-top: 28px;
+  margin-top: var(--s5);
 }
 
 .buttons .btn {
-  background: #fff;
-  color: var(--brand);
-  border-radius: 50px;
-  padding: 15px 35px;
   text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  flex: 1 1 160px;
 }
 
-.buttons .btn:hover {
-  background: #f0f0f0;
-  color: var(--brand-dark);
+.buttons .btn-quiet {
+  background: rgba(255, 255, 255, 0.06);
+  color: #eef1f6;
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
-.buttons .btn-outline {
-  background: transparent;
-  color: #fff;
-  border: 2px solid #fff;
-}
-
-.buttons .btn-outline:hover {
-  background: #fff;
-  color: var(--brand);
+.buttons .btn-quiet:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .suggestions {
-  margin-top: 36px;
-  background: rgba(255, 255, 255, 0.15);
-  padding: 25px;
-  border-radius: var(--radius);
+  margin-top: var(--s5);
+  padding-top: var(--s5);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   text-align: start;
 }
 
 .suggestions h2 {
-  font-size: 19px;
-  margin-bottom: 15px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #8b93a3;
+  margin-bottom: var(--s3);
 }
 
 .suggestions ul {
   list-style: none;
+  display: grid;
+  gap: var(--s2);
 }
 
 .suggestions li {
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  gap: var(--s2);
+  align-items: flex-start;
+  font-size: 13.5px;
+  color: #a8b0bf;
 }
 
-.suggestions li:last-child {
-  border-bottom: none;
-}
-
-.suggestions li::before {
-  content: '✓ ';
-  margin-inline-end: 10px;
-  font-weight: bold;
+.suggestions .icon {
+  width: 15px;
+  height: 15px;
+  margin-top: 4px;
+  color: #4f46e5;
 }
 
 .footer {
-  margin-top: 36px;
-  font-size: 14px;
-  opacity: 0.85;
+  margin-top: var(--s5);
+  font-size: 12px;
+  color: #6b7484;
 }
 
-@media (max-width: 768px) {
-  .error-code { font-size: 72px; }
-  .error-emoji { font-size: 56px; }
-  .state h1 { font-size: 22px; }
+@media (max-width: 520px) {
   .buttons { flex-direction: column; }
-  .buttons .btn { width: 100%; }
-}
-
-/* عناصر الحالة تُخفى وتُظهر عبر السمة hidden لا عبر تعديل style مباشرة */
-[hidden] {
-  display: none !important;
+  /* في العمود يصبح flex-basis ارتفاعًا لا عرضًا، فتتضخّم الأزرار */
+  .buttons .btn { flex: none; width: 100%; }
+  #failure { padding: var(--s5) var(--s4); }
 }

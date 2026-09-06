@@ -4,39 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#0b0d12">
     <!-- CSP: تقصر تنفيذ السكربتات على ملفات الموقع نفسه و Firebase SDK من
-         نطاق Google، فتحدّ من أثر أي XSS مستقبلي (البند 12).
+         نطاق Google، فتحدّ من أثر أي XSS مستقبلي.
          www.google.com في img-src يلزم لصورة فحص الاتصال التي يحمّلها نقل
          Firestore (WebChannel).
-         ملاحظة: frame-ancestors لا تعمل من وسم meta وتحتاج ترويسة خادم،
+         عنوان 127.0.0.1 مسموح به للاتصال بمحاكي Firebase أثناء التطوير فقط.
+         ملاحظة: frame-ancestors تحتاج ترويسة خادم ولا تعمل من وسم meta،
          وGitHub Pages لا يسمح بترويسات مخصصة. -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' https://www.gstatic.com;
-        style-src 'self';
+        style-src 'self' https://fonts.googleapis.com;
+        font-src https://fonts.gstatic.com;
         img-src 'self' data: https://www.google.com;
         connect-src https://firestore.googleapis.com https://*.googleapis.com
                     http://127.0.0.1:8080;
         base-uri 'none';
         form-action 'none'">
-    <title>جاري التحويل...</title>
+    <title>جاري التحويل…</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="./shared.css">
     <link rel="stylesheet" href="./redirect.css">
 </head>
 <body>
-    <!-- حالة التحميل -->
+    <svg class="sprite" aria-hidden="true">
+        <symbol id="i-alert" viewBox="0 0 24 24">
+            <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/>
+        </symbol>
+    </svg>
+
     <div class="state" id="loading" role="status" aria-live="polite">
         <div class="spinner" aria-hidden="true"></div>
-        <h1>جاري التحويل...</h1>
+        <h1>جاري التحويل</h1>
         <p id="status">يرجى الانتظار</p>
     </div>
 
-    <!-- حالة الفشل: تظهر فقط إذا تعذّر التحويل -->
     <div class="state" id="failure" hidden role="alert">
-        <div class="error-emoji" aria-hidden="true">⚠️</div>
+        <span class="failure-mark" aria-hidden="true">
+            <svg class="icon"><use href="#i-alert"/></svg>
+        </span>
         <h1>تعذّر التحويل</h1>
         <p id="failure-message"></p>
-        <p>يرجى التواصل مع المسؤول.</p>
+        <p class="footer">يرجى التواصل مع المسؤول</p>
     </div>
 
     <script type="module" src="./redirect-page.js"></script>
