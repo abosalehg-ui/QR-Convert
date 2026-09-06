@@ -3,930 +3,342 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم - QR Redirect</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .login-container {
-            max-width: 400px;
-            margin: 100px auto;
-            background: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }
-
-        .login-container h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 15px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: bold;
-        }
-
-        .google-btn {
-            background: #4285f4;
-            color: white;
-        }
-
-        .google-btn:hover {
-            background: #357ae8;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(66, 133, 244, 0.3);
-        }
-
-        .email-btn {
-            background: #5e72e4;
-            color: white;
-        }
-
-        .email-btn:hover {
-            background: #4c63d2;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(94, 114, 228, 0.3);
-        }
-
-        .email-form {
-            display: none;
-            margin-top: 20px;
-        }
-
-        .email-form input {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-        .email-form input:focus {
-            outline: none;
-            border-color: #5e72e4;
-        }
-
-        .dashboard {
-            display: none;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .header {
-            background: white;
-            padding: 20px 30px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        .header h1 {
-            color: #333;
-            font-size: 24px;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .logout-btn {
-            background: #e74c3c;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-
-        .logout-btn:hover {
-            background: #c0392b;
-            transform: translateY(-2px);
-        }
-
-        .cards-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .card {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        .card h2 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 20px;
-            border-bottom: 3px solid #667eea;
-            padding-bottom: 10px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: inherit;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        .btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-
-        .btn:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-danger {
-            background: #e74c3c;
-        }
-
-        .btn-danger:hover {
-            background: #c0392b;
-        }
-
-        .btn-success {
-            background: #27ae60;
-        }
-
-        .btn-success:hover {
-            background: #229954;
-        }
-
-        .links-list {
-            margin-top: 20px;
-        }
-
-        .link-item {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            border-right: 5px solid #667eea;
-            transition: all 0.3s;
-        }
-
-        .link-item:hover {
-            transform: translateX(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .link-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .link-name {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .link-status {
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .link-status.active {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .link-status.inactive {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .link-url {
-            color: #667eea;
-            font-size: 14px;
-            word-break: break-all;
-            margin-bottom: 8px;
-        }
-
-        .link-desc {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-
-        .link-stats {
-            display: flex;
-            gap: 20px;
-            margin-top: 10px;
-            font-size: 13px;
-            color: #777;
-        }
-
-        .link-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .link-actions button {
-            flex: 1;
-            padding: 8px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.3s;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 36px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .history-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border-right: 3px solid #95a5a6;
-        }
-
-        .history-date {
-            font-size: 12px;
-            color: #777;
-            margin-bottom: 8px;
-        }
-
-        .history-url {
-            color: #667eea;
-            font-size: 14px;
-            word-break: break-all;
-        }
-
-        .copy-btn {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 5px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-            margin-right: 10px;
-        }
-
-        .copy-btn:hover {
-            background: #2980b9;
-        }
-
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
-        }
-
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .toggle-slider {
-            background-color: #27ae60;
-        }
-
-        input:checked + .toggle-slider:before {
-            transform: translateX(26px);
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-        }
-
-        .modal-content {
-            background-color: white;
-            margin: 5% auto;
-            padding: 30px;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        }
-
-        .close-modal {
-            color: #aaa;
-            float: left;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close-modal:hover {
-            color: #000;
-        }
-
-        @media (max-width: 768px) {
-            .cards-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .header {
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            .link-actions {
-                flex-direction: column;
-            }
-        }
-
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .alert.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-    </style>
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)">
+    <!-- CSP: السكربتات من الموقع نفسه و Firebase SDK فقط.
+         connect-src تشمل خدمات المصادقة و Firestore، و frame-src تلزم
+         لنافذة دخول Google المنبثقة.
+         www.google.com في img-src يلزم لصورة فحص الاتصال التي يحمّلها نقل
+         Firestore (WebChannel).
+         عناوين 127.0.0.1 مسموح بها للاتصال بمحاكي Firebase أثناء التطوير فقط.
+         ملاحظة: frame-ancestors تحتاج ترويسة خادم ولا تعمل من وسم meta،
+         وGitHub Pages لا يسمح بترويسات مخصصة. -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' https://www.gstatic.com https://apis.google.com;
+        style-src 'self' https://fonts.googleapis.com;
+        font-src https://fonts.gstatic.com;
+        img-src 'self' data: https://www.google.com https://*.googleusercontent.com;
+        connect-src https://*.googleapis.com https://*.firebaseio.com
+                    https://securetoken.googleapis.com
+                    https://identitytoolkit.googleapis.com
+                    http://127.0.0.1:8080 http://127.0.0.1:9099;
+        frame-src https://qr-redirect-2e522.firebaseapp.com https://accounts.google.com;
+        base-uri 'none';
+        form-action 'none'">
+    <title>لوحة التحكم — QR Redirect</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+    <link rel="stylesheet" href="./shared.css">
+    <link rel="stylesheet" href="./admin.css">
 </head>
 <body>
-    <!-- Login Screen -->
-    <div class="login-container" id="loginContainer">
-        <h1>🔐 تسجيل الدخول</h1>
-        <button class="login-btn google-btn" onclick="loginWithGoogle()">
-            📧 الدخول بحساب Google
-        </button>
-        <button class="login-btn email-btn" onclick="toggleEmailForm()">
-            ✉️ الدخول بالبريد الإلكتروني
-        </button>
-        
-        <div class="email-form" id="emailForm">
-            <input type="email" id="emailInput" placeholder="البريد الإلكتروني">
-            <input type="password" id="passwordInput" placeholder="كلمة المرور">
-            <button class="login-btn email-btn" onclick="loginWithEmail()">دخول</button>
-        </div>
+    <!-- مستودع الأيقونات: رموز SVG يُشار إليها بـ <use> من HTML ومن JS.
+         بدل الإيموجي: حجم ولون متسقان، وتتبع لون النص في الوضعين. -->
+    <svg class="sprite" aria-hidden="true">
+        <symbol id="i-qr" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM21 14v3M18 21h3M14 21h1"/>
+        </symbol>
+        <symbol id="i-lock" viewBox="0 0 24 24">
+            <rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+        </symbol>
+        <symbol id="i-shield-off" viewBox="0 0 24 24">
+            <path d="M12 3 4 6v6c0 5 3.4 8.4 8 9 4.6-.6 8-4 8-9V6Z"/><path d="m9 12 6-4M15 12 9 8"/>
+        </symbol>
+        <symbol id="i-mail" viewBox="0 0 24 24">
+            <rect x="2" y="5" width="20" height="14" rx="2"/><path d="m2 7 10 6 10-6"/>
+        </symbol>
+        <!-- أيقونة محايدة لا شعار Google: رسم شعار تقريبي بخطوط
+             يظهر مشوّهًا ويوحي بانتماء غير صحيح -->
+        <symbol id="i-user" viewBox="0 0 24 24">
+            <circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>
+        </symbol>
+        <symbol id="i-logout" viewBox="0 0 24 24">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+        </symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+        <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+        <symbol id="i-edit" viewBox="0 0 24 24">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z"/>
+        </symbol>
+        <symbol id="i-history" viewBox="0 0 24 24">
+            <path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>
+        </symbol>
+        <symbol id="i-pause" viewBox="0 0 24 24"><path d="M10 4v16M14 4v16"/></symbol>
+        <symbol id="i-play" viewBox="0 0 24 24"><path d="M6 4l14 8-14 8Z"/></symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24">
+            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/>
+        </symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24">
+            <rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </symbol>
+        <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+        <symbol id="i-link" viewBox="0 0 24 24">
+            <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/>
+            <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"/>
+        </symbol>
+        <symbol id="i-cursor" viewBox="0 0 24 24">
+            <path d="m3 3 7.5 18 2.5-7.5L20.5 11Z"/>
+        </symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+        <symbol id="i-calendar" viewBox="0 0 24 24">
+            <rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>
+        </symbol>
+        <symbol id="i-inbox" viewBox="0 0 24 24">
+            <path d="M3 12h5l2 3h4l2-3h5"/><path d="M5 5h14l2 7v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7Z"/>
+        </symbol>
+        <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
+        <symbol id="i-alert" viewBox="0 0 24 24">
+            <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/>
+        </symbol>
+    </svg>
+
+    <!-- حالة الإقلاع: تظهر حتى ترد Firebase بحالة المصادقة، فلا تكون
+         الصفحة بيضاء فارغة إذا تأخّر تحميل SDK أو فشل -->
+    <div class="auth" id="bootState" role="status">
+        <div class="auth-card is-centered">جارٍ التحميل…</div>
     </div>
 
-    <!-- Dashboard -->
-    <div class="dashboard" id="dashboard">
-        <div class="header">
-            <h1>🎯 لوحة تحكم QR Redirect</h1>
-            <div class="user-info">
-                <span id="userEmail"></span>
-                <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
-            </div>
-        </div>
+    <!-- ===================== شاشة الدخول ===================== -->
+    <main class="auth" id="loginContainer" hidden>
+        <div class="auth-card">
+            <span class="auth-mark" aria-hidden="true">
+                <svg class="icon icon-lg"><use href="#i-lock"/></svg>
+            </span>
+            <h1>تسجيل الدخول</h1>
+            <p class="hint">لوحة تحكم روابط QR — للمسؤولين فقط.</p>
 
-        <div class="alert success" id="successAlert"></div>
-        <div class="alert error" id="errorAlert"></div>
+            <p class="alert error" id="loginError" role="alert" hidden></p>
 
-        <div class="cards-container">
-            <!-- Stats Card -->
-            <div class="stat-card">
-                <div class="stat-number" id="totalClicks">0</div>
-                <div class="stat-label">إجمالي النقرات</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-number" id="totalLinks">0</div>
-                <div class="stat-label">عدد الروابط</div>
+            <div class="auth-actions">
+                <button type="button" class="btn btn-ghost btn-block" id="googleLoginBtn">
+                    <svg class="icon" aria-hidden="true"><use href="#i-user"/></svg>
+                    المتابعة بحساب Google
+                </button>
+
+                <!-- الزر يفتح نموذجًا ولا يسجّل الدخول بنفسه، فاسمه يقول ذلك
+                     ويحمل aria-expanded ليعرف قارئ الشاشة حالته -->
+                <button type="button" class="btn btn-ghost btn-block" id="toggleEmailFormBtn"
+                        aria-expanded="false" aria-controls="emailForm">
+                    <svg class="icon" aria-hidden="true"><use href="#i-mail"/></svg>
+                    المتابعة بالبريد الإلكتروني
+                </button>
             </div>
 
-            <div class="stat-card">
-                <div class="stat-number" id="activeLinks">0</div>
-                <div class="stat-label">روابط نشطة</div>
-            </div>
-        </div>
-
-        <!-- Add New Link -->
-        <div class="card">
-            <h2>➕ إضافة رابط جديد</h2>
-            <form onsubmit="addNewLink(event)">
-                <div class="form-group">
-                    <label>اسم الرابط (سيظهر في URL)</label>
-                    <input type="text" id="newLinkName" placeholder="مثال: link1" required 
-                           pattern="[a-zA-Z0-9_-]+" title="حروف وأرقام فقط">
-                    <small style="color: #777;">سيكون الرابط: https://abosalehg-ui.github.io/QR-Convert/<span id="linkPreview">link1</span></small>
+            <form id="emailForm" hidden>
+                <div class="auth-sep">أدخل بياناتك</div>
+                <div class="field">
+                    <label for="emailInput">البريد الإلكتروني</label>
+                    <input type="email" id="emailInput" autocomplete="username"
+                           placeholder="name@example.com" required>
                 </div>
-                
-                <div class="form-group">
-                    <label>الرابط الهدف</label>
-                    <input type="url" id="newLinkUrl" placeholder="https://example.com" required>
+                <div class="field">
+                    <label for="passwordInput">كلمة المرور</label>
+                    <input type="password" id="passwordInput" autocomplete="current-password"
+                           placeholder="••••••••" required>
                 </div>
-                
-                <div class="form-group">
-                    <label>الوصف</label>
-                    <textarea id="newLinkDesc" placeholder="وصف اختياري للرابط"></textarea>
-                </div>
-                
-                <button type="submit" class="btn">إضافة الرابط</button>
+                <button type="submit" class="btn btn-block" id="emailLoginBtn">دخول</button>
             </form>
         </div>
+    </main>
 
-        <!-- Links List -->
-        <div class="card">
-            <h2>📋 قائمة الروابط</h2>
-            <div id="linksList"></div>
+    <!-- ===================== لا تملك صلاحية ===================== -->
+    <main class="auth" id="deniedContainer" hidden>
+        <div class="auth-card">
+            <span class="auth-mark auth-mark-danger" aria-hidden="true">
+                <svg class="icon icon-lg"><use href="#i-shield-off"/></svg>
+            </span>
+            <h1>لا تملك صلاحية</h1>
+            <p class="hint">الحساب <strong id="deniedEmail"></strong> ليس ضمن قائمة المسؤولين.</p>
+
+            <p class="hint auth-note">
+                إذا كان هذا حسابك كمسؤول، تأكد من إضافة بريدك في <code>firestore.rules</code>
+                ومن نشر القواعد، ومن تفعيل بريدك (Email verified) في Firebase Authentication.
+            </p>
+
+            <button type="button" class="btn btn-ghost btn-block push-top" id="deniedLogoutBtn">
+                <svg class="icon" aria-hidden="true"><use href="#i-logout"/></svg>
+                تسجيل الخروج
+            </button>
         </div>
+    </main>
+
+    <!-- ===================== اللوحة ===================== -->
+    <div id="dashboard" hidden>
+        <header class="topbar">
+            <div class="topbar-inner">
+                <div class="brand">
+                    <span class="brand-mark" aria-hidden="true">
+                        <svg class="icon"><use href="#i-qr"/></svg>
+                    </span>
+                    <div>
+                        <h1>QR Redirect</h1>
+                        <div class="hint">لوحة التحكم</div>
+                    </div>
+                </div>
+                <span class="who" id="userEmail"></span>
+                <button type="button" class="btn btn-ghost" id="logoutBtn">
+                    <svg class="icon" aria-hidden="true"><use href="#i-logout"/></svg>
+                    خروج
+                </button>
+            </div>
+        </header>
+
+        <main class="page">
+            <section class="stats" aria-label="إحصائيات">
+                <div class="stat">
+                    <span class="stat-icon" aria-hidden="true"><svg class="icon"><use href="#i-cursor"/></svg></span>
+                    <div>
+                        <div class="stat-number" id="totalClicks">0</div>
+                        <div class="stat-label">إجمالي النقرات</div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <span class="stat-icon" aria-hidden="true"><svg class="icon"><use href="#i-link"/></svg></span>
+                    <div>
+                        <div class="stat-number" id="totalLinks">0</div>
+                        <div class="stat-label">عدد الروابط</div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <span class="stat-icon" aria-hidden="true"><svg class="icon"><use href="#i-check-circle"/></svg></span>
+                    <div>
+                        <div class="stat-number" id="activeLinks">0</div>
+                        <div class="stat-label">روابط نشطة</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-head">
+                    <svg class="icon tint-accent" aria-hidden="true"><use href="#i-plus"/></svg>
+                    <h2>إضافة رابط جديد</h2>
+                </div>
+                <div class="card-body">
+                    <form id="addLinkForm">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="newLinkName">اسم الرابط</label>
+                                <input type="text" id="newLinkName" placeholder="link1" required
+                                       pattern="[a-zA-Z0-9_\-]+" inputmode="latin"
+                                       aria-describedby="newLinkNameHint" dir="ltr">
+                                <small class="hint" id="newLinkNameHint">
+                                    العنوان النهائي: <code>…/QR-Convert/<span id="linkPreview">link1</span></code><br>
+                                    حروف إنجليزية وأرقام وشرطتان فقط.
+                                    <strong>لا يمكن تغيير الاسم بعد الإنشاء</strong> لأنه معرّف الرابط
+                                    في قاعدة البيانات، وأي رمز QR مطبوع يعتمد عليه.
+                                </small>
+                            </div>
+
+                            <div class="field">
+                                <label for="newLinkUrl">الرابط الهدف</label>
+                                <input type="url" id="newLinkUrl" placeholder="https://example.com" required
+                                       aria-describedby="newLinkUrlHint" dir="ltr">
+                                <small class="hint" id="newLinkUrlHint">يجب أن يبدأ بـ http:// أو https://</small>
+                            </div>
+
+                            <div class="field span-2">
+                                <label for="newLinkDesc">الوصف</label>
+                                <textarea id="newLinkDesc" placeholder="وصف اختياري يساعدك على تمييز الرابط لاحقًا"
+                                          maxlength="499"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn" id="addLinkBtn">
+                                <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>
+                                إضافة الرابط
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-head">
+                    <svg class="icon tint-accent" aria-hidden="true"><use href="#i-list"/></svg>
+                    <h2>الروابط</h2>
+                </div>
+                <div class="links" id="linksList"></div>
+            </section>
+        </main>
     </div>
 
-    <!-- Edit Modal -->
-    <div id="editModal" class="modal">
+    <!-- التنبيهات تطفو أسفل الشاشة فلا تزيح المحتوى عند ظهورها -->
+    <div class="alerts">
+        <p class="alert success" id="successAlert" role="alert" hidden></p>
+        <p class="alert error" id="errorAlert" role="alert" hidden></p>
+    </div>
+
+    <!-- ===================== نافذة التعديل ===================== -->
+    <div id="editModal" class="modal" hidden role="dialog" aria-modal="true"
+         aria-labelledby="editModalTitle">
         <div class="modal-content">
-            <span class="close-modal" onclick="closeEditModal()">&times;</span>
-            <h2 style="margin-bottom: 20px;">✏️ تعديل الرابط</h2>
-            <form onsubmit="updateLink(event)">
+            <div class="modal-header">
+                <svg class="icon tint-accent" aria-hidden="true"><use href="#i-edit"/></svg>
+                <h2 id="editModalTitle">تعديل <span id="editLinkName" class="link-name"></span></h2>
+                <button type="button" class="btn-icon" data-close-modal="editModal"
+                        aria-label="إغلاق نافذة التعديل">
+                    <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+                </button>
+            </div>
+            <form id="editLinkForm" class="modal-form">
                 <input type="hidden" id="editLinkId">
-                <div class="form-group">
-                    <label>الرابط الهدف</label>
-                    <input type="url" id="editLinkUrl" required>
+                <div class="field">
+                    <label for="editLinkUrl">الرابط الهدف</label>
+                    <input type="url" id="editLinkUrl" required dir="ltr">
                 </div>
-                <div class="form-group">
-                    <label>الوصف</label>
-                    <textarea id="editLinkDesc"></textarea>
+                <div class="field">
+                    <label for="editLinkDesc">الوصف</label>
+                    <textarea id="editLinkDesc" maxlength="499"></textarea>
                 </div>
-                <button type="submit" class="btn">حفظ التعديلات</button>
+                <p class="hint">ستُحفظ الوجهة الحالية في الأرشيف قبل استبدالها.</p>
+                <div class="modal-actions">
+                    <button type="submit" class="btn" id="editLinkBtn">حفظ التعديلات</button>
+                </div>
             </form>
         </div>
     </div>
 
-    <!-- History Modal -->
-    <div id="historyModal" class="modal">
+    <!-- ===================== نافذة الأرشيف ===================== -->
+    <div id="historyModal" class="modal" hidden role="dialog" aria-modal="true"
+         aria-labelledby="historyModalTitle">
         <div class="modal-content">
-            <span class="close-modal" onclick="closeHistoryModal()">&times;</span>
-            <h2 style="margin-bottom: 20px;">📚 أرشيف التعديلات</h2>
+            <div class="modal-header">
+                <svg class="icon tint-accent" aria-hidden="true"><use href="#i-history"/></svg>
+                <h2 id="historyModalTitle">أرشيف التعديلات</h2>
+                <button type="button" class="btn-icon" data-close-modal="historyModal"
+                        aria-label="إغلاق نافذة الأرشيف">
+                    <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+                </button>
+            </div>
             <div id="historyList"></div>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, signInWithPopup, signInWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, setDoc, query, orderBy, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    <!-- ===================== نافذة التأكيد ===================== -->
+    <div id="confirmModal" class="modal" hidden role="alertdialog" aria-modal="true"
+         aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+        <div class="modal-content">
+            <div class="modal-header">
+                <svg class="icon tint-danger" aria-hidden="true"><use href="#i-alert"/></svg>
+                <h2 id="confirmTitle"></h2>
+                <button type="button" class="btn-icon" data-close-modal="confirmModal" aria-label="إلغاء">
+                    <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+                </button>
+            </div>
+            <p class="hint" id="confirmMessage"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-ghost" id="confirmNo">إلغاء</button>
+                <button type="button" class="btn btn-danger-solid" id="confirmYes">نعم، احذف</button>
+            </div>
+        </div>
+    </div>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCAM51J2XJt5lp6gN_mPPxR1ekav1spSkQ",
-  authDomain: "qr-redirect-2e522.firebaseapp.com",
-  projectId: "qr-redirect-2e522",
-  storageBucket: "qr-redirect-2e522.firebasestorage.app",
-  messagingSenderId: "142086636138",
-  appId: "1:142086636138:web:f7079987c0d1dee7f0c013",
-  measurementId: "G-D9TR6C1TS4"
-};
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // Global variables
-        window.currentUser = null;
-
-        // Auth State Observer
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                window.currentUser = user;
-                document.getElementById('loginContainer').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'block';
-                document.getElementById('userEmail').textContent = user.email;
-                loadDashboard();
-            } else {
-                window.currentUser = null;
-                document.getElementById('loginContainer').style.display = 'block';
-                document.getElementById('dashboard').style.display = 'none';
-            }
-        });
-
-        // Login Functions
-        window.loginWithGoogle = async () => {
-            try {
-                const provider = new GoogleAuthProvider();
-                await signInWithPopup(auth, provider);
-            } catch (error) {
-                showError('فشل تسجيل الدخول: ' + error.message);
-            }
-        };
-
-        window.toggleEmailForm = () => {
-            const form = document.getElementById('emailForm');
-            form.style.display = form.style.display === 'none' ? 'block' : 'none';
-        };
-
-        window.loginWithEmail = async () => {
-            const email = document.getElementById('emailInput').value;
-            const password = document.getElementById('passwordInput').value;
-            
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                showError('فشل تسجيل الدخول: ' + error.message);
-            }
-        };
-
-        window.logout = async () => {
-            try {
-                await signOut(auth);
-            } catch (error) {
-                showError('فشل تسجيل الخروج: ' + error.message);
-            }
-        };
-
-        // Dashboard Functions
-        async function loadDashboard() {
-            await loadStats();
-            await loadLinks();
-        }
-
-        async function loadStats() {
-            try {
-                const linksSnapshot = await getDocs(collection(db, 'links'));
-                let totalClicks = 0;
-                let activeCount = 0;
-
-                linksSnapshot.forEach(doc => {
-                    const data = doc.data();
-                    totalClicks += data.clicks || 0;
-                    if (data.active) activeCount++;
-                });
-
-                document.getElementById('totalClicks').textContent = totalClicks;
-                document.getElementById('totalLinks').textContent = linksSnapshot.size;
-                document.getElementById('activeLinks').textContent = activeCount;
-            } catch (error) {
-                console.error('Error loading stats:', error);
-            }
-        }
-
-        async function loadLinks() {
-            try {
-                const linksSnapshot = await getDocs(collection(db, 'links'));
-                const linksList = document.getElementById('linksList');
-                linksList.innerHTML = '';
-
-                if (linksSnapshot.empty) {
-                    linksList.innerHTML = '<p style="text-align: center; color: #999;">لا توجد روابط بعد</p>';
-                    return;
-                }
-
-                linksSnapshot.forEach(docSnap => {
-                    const data = docSnap.data();
-                    const linkId = docSnap.id;
-                    
-                    const fullUrl = `https://abosalehg-ui.github.io/QR-Convert/${linkId}`;
-                    const lastClicked = data.lastClicked ? new Date(data.lastClicked.toDate()).toLocaleString('ar-EG') : 'لم يتم النقر بعد';
-                    
-                    const linkItem = document.createElement('div');
-                    linkItem.className = 'link-item';
-                    linkItem.innerHTML = `
-                        <div class="link-header">
-                            <span class="link-name">${linkId}</span>
-                            <span class="link-status ${data.active ? 'active' : 'inactive'}">
-                                ${data.active ? '🟢 نشط' : '🔴 غير نشط'}
-                            </span>
-                        </div>
-                        <div class="link-url">
-                            <button class="copy-btn" onclick="copyToClipboard('${fullUrl}')">📋 نسخ</button>
-                            ${fullUrl}
-                        </div>
-                        <div class="link-desc">${data.description || 'لا يوجد وصف'}</div>
-                        <div class="link-stats">
-                            <span>👆 النقرات: ${data.clicks || 0}</span>
-                            <span>📅 آخر نقرة: ${lastClicked}</span>
-                            <span>⏰ تم الإنشاء: ${new Date(data.createdAt.toDate()).toLocaleDateString('ar-EG')}</span>
-                        </div>
-                        <div class="link-actions">
-                            <button onclick="editLink('${linkId}')" class="btn">✏️ تعديل</button>
-                            <button onclick="viewHistory('${linkId}')" class="btn" style="background: #3498db;">📚 الأرشيف</button>
-                            <button onclick="toggleLinkStatus('${linkId}', ${!data.active})" 
-                                    class="btn ${data.active ? 'btn-danger' : 'btn-success'}">
-                                ${data.active ? '⏸️ تعطيل' : '▶️ تفعيل'}
-                            </button>
-                            <button onclick="deleteLink('${linkId}')" class="btn btn-danger">🗑️ حذف</button>
-                        </div>
-                    `;
-                    linksList.appendChild(linkItem);
-                });
-            } catch (error) {
-                showError('فشل تحميل الروابط: ' + error.message);
-            }
-        }
-
-        window.addNewLink = async (event) => {
-            event.preventDefault();
-            
-            const name = document.getElementById('newLinkName').value.trim();
-            const url = document.getElementById('newLinkUrl').value.trim();
-            const description = document.getElementById('newLinkDesc').value.trim();
-
-            try {
-                // Check if link already exists
-                const linkDoc = await getDoc(doc(db, 'links', name));
-                if (linkDoc.exists()) {
-                    showError('اسم الرابط موجود مسبقاً، الرجاء اختيار اسم آخر');
-                    return;
-                }
-
-                // Create new link with specific ID
-                const linkRef = doc(db, 'links', name);
-                await setDoc(linkRef, {
-                    url: url,
-                    description: description,
-                    active: true,
-                    clicks: 0,
-                    createdAt: serverTimestamp(),
-                    lastClicked: null,
-                    createdBy: window.currentUser.email
-                });
-
-                showSuccess('تم إضافة الرابط بنجاح!');
-                document.getElementById('newLinkName').value = '';
-                document.getElementById('newLinkUrl').value = '';
-                document.getElementById('newLinkDesc').value = '';
-                
-                await loadDashboard();
-            } catch (error) {
-                showError('فشل إضافة الرابط: ' + error.message);
-            }
-        };
-
-        window.editLink = async (linkId) => {
-            try {
-                const linkDoc = await getDoc(doc(db, 'links', linkId));
-                const data = linkDoc.data();
-
-                document.getElementById('editLinkId').value = linkId;
-                document.getElementById('editLinkUrl').value = data.url;
-                document.getElementById('editLinkDesc').value = data.description || '';
-                
-                document.getElementById('editModal').style.display = 'block';
-            } catch (error) {
-                showError('فشل تحميل بيانات الرابط: ' + error.message);
-            }
-        };
-
-        window.updateLink = async (event) => {
-            event.preventDefault();
-            
-            const linkId = document.getElementById('editLinkId').value;
-            const url = document.getElementById('editLinkUrl').value.trim();
-            const description = document.getElementById('editLinkDesc').value.trim();
-
-            try {
-                const linkRef = doc(db, 'links', linkId);
-                const oldData = (await getDoc(linkRef)).data();
-
-                // Save to history
-                await addDoc(collection(db, 'links', linkId, 'history'), {
-                    url: oldData.url,
-                    description: oldData.description,
-                    changedAt: serverTimestamp(),
-                    changedBy: window.currentUser.email
-                });
-
-                // Update link
-                await updateDoc(linkRef, {
-                    url: url,
-                    description: description,
-                    updatedAt: serverTimestamp()
-                });
-
-                showSuccess('تم تحديث الرابط بنجاح!');
-                closeEditModal();
-                await loadDashboard();
-            } catch (error) {
-                showError('فشل تحديث الرابط: ' + error.message);
-            }
-        };
-
-        window.toggleLinkStatus = async (linkId, newStatus) => {
-            try {
-                await updateDoc(doc(db, 'links', linkId), {
-                    active: newStatus
-                });
-                
-                showSuccess(newStatus ? 'تم تفعيل الرابط' : 'تم تعطيل الرابط');
-                await loadDashboard();
-            } catch (error) {
-                showError('فشل تغيير حالة الرابط: ' + error.message);
-            }
-        };
-
-        window.deleteLink = async (linkId) => {
-            if (!confirm('هل أنت متأكد من حذف هذا الرابط؟ لا يمكن التراجع عن هذا الإجراء!')) {
-                return;
-            }
-
-            try {
-                await deleteDoc(doc(db, 'links', linkId));
-                showSuccess('تم حذف الرابط بنجاح!');
-                await loadDashboard();
-            } catch (error) {
-                showError('فشل حذف الرابط: ' + error.message);
-            }
-        };
-
-        window.viewHistory = async (linkId) => {
-            try {
-                const historySnapshot = await getDocs(
-                    query(collection(db, 'links', linkId, 'history'), orderBy('changedAt', 'desc'))
-                );
-
-                const historyList = document.getElementById('historyList');
-                historyList.innerHTML = '';
-
-                if (historySnapshot.empty) {
-                    historyList.innerHTML = '<p style="text-align: center; color: #999;">لا يوجد تاريخ تعديلات</p>';
-                } else {
-                    historySnapshot.forEach(docSnap => {
-                        const data = docSnap.data();
-                        const item = document.createElement('div');
-                        item.className = 'history-item';
-                        item.innerHTML = `
-                            <div class="history-date">
-                                📅 ${new Date(data.changedAt.toDate()).toLocaleString('ar-EG')}
-                                بواسطة: ${data.changedBy}
-                            </div>
-                            <div class="history-url">🔗 ${data.url}</div>
-                            <div class="link-desc">📝 ${data.description || 'لا يوجد وصف'}</div>
-                        `;
-                        historyList.appendChild(item);
-                    });
-                }
-
-                document.getElementById('historyModal').style.display = 'block';
-            } catch (error) {
-                showError('فشل تحميل الأرشيف: ' + error.message);
-            }
-        };
-
-        window.closeEditModal = () => {
-            document.getElementById('editModal').style.display = 'none';
-        };
-
-        window.closeHistoryModal = () => {
-            document.getElementById('historyModal').style.display = 'none';
-        };
-
-        window.copyToClipboard = async (text) => {
-            try {
-                await navigator.clipboard.writeText(text);
-                showSuccess('تم نسخ الرابط!');
-            } catch (error) {
-                showError('فشل النسخ');
-            }
-        };
-
-        function showSuccess(message) {
-            const alert = document.getElementById('successAlert');
-            alert.textContent = '✅ ' + message;
-            alert.style.display = 'block';
-            setTimeout(() => { alert.style.display = 'none'; }, 3000);
-        }
-
-        function showError(message) {
-            const alert = document.getElementById('errorAlert');
-            alert.textContent = '❌ ' + message;
-            alert.style.display = 'block';
-            setTimeout(() => { alert.style.display = 'none'; }, 5000);
-        }
-
-        // Link name preview
-        document.getElementById('newLinkName').addEventListener('input', (e) => {
-            document.getElementById('linkPreview').textContent = e.target.value || 'link1';
-        });
-
-        // Close modals on click outside
-        window.onclick = (event) => {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
-            }
-        };
-
-        // Make functions globally available
-        window.showSuccess = showSuccess;
-        window.showError = showError;
-    </script>
+    <script type="module" src="./admin.js"></script>
 </body>
 </html>

@@ -20,8 +20,8 @@
 ```
 1. أنشئ Repository جديد: QR-Convert
 2. أنشئ مجلد /docs
-3. ارفع: index.html و admin.html
-4. الصق Firebase Config في الملفين
+3. ارفع محتويات مجلد docs كاملًا (HTML و JS و CSS)
+4. الصق Firebase Config في docs/firebase-config.js — ملف واحد فقط
 ```
 
 ### 3️⃣ تفعيل GitHub Pages (2 دقيقة)
@@ -153,8 +153,8 @@ https://abosalehg-ui.github.io/QR-Convert/main
 
 ### Firebase Config
 ```javascript
-// في index.html و admin.html
-const firebaseConfig = {
+// في docs/firebase-config.js — مصدر واحد تستورده كل الصفحات
+export const firebaseConfig = {
     apiKey: "YOUR_API_KEY",           // ← هنا
     authDomain: "YOUR_AUTH_DOMAIN",   // ← وهنا
     projectId: "YOUR_PROJECT_ID",     // ← وهنا
@@ -162,12 +162,20 @@ const firebaseConfig = {
 };
 ```
 
+> هذه القيم عامة بطبيعتها وليست سرًا — الحماية كلها في Security Rules.
+> راجع SECURITY.md.
+
 ### Security Rules
 ```javascript
 // في Firestore Rules
 request.auth.token.email in [
   'your-email@gmail.com'  // ← ضع إيميلك
 ]
+```
+
+بعد أي تعديل على القواعد، شغّل اختباراتها قبل النشر:
+```bash
+npm run test:rules
 ```
 
 ### GitHub Pages
@@ -194,8 +202,9 @@ Settings → Pages → Source:
 **GitHub:**
 - [x] Repository منشأ
 - [x] مجلد /docs موجود
-- [x] index.html و admin.html مرفوعة
-- [x] Firebase Config مُلصق في الملفات
+- [x] محتويات docs/ مرفوعة كاملة
+- [x] Firebase Config مُلصق في docs/firebase-config.js
+- [x] بريد المسؤول مُفعَّل (Email verified) في Authentication
 - [x] GitHub Pages مفعّل
 
 **الاختبار:**

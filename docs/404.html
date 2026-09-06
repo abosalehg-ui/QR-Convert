@@ -3,228 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الصفحة غير موجودة - 404</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            overflow: hidden;
-        }
-
-        .error-container {
-            text-align: center;
-            max-width: 600px;
-            padding: 40px;
-            animation: fadeIn 0.6s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .error-code {
-            font-size: 120px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            text-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            animation: bounce 2s infinite;
-        }
-
-        @keyframes bounce {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-
-        .error-emoji {
-            font-size: 80px;
-            margin-bottom: 20px;
-            animation: shake 3s infinite;
-        }
-
-        @keyframes shake {
-            0%, 100% {
-                transform: rotate(0deg);
-            }
-            25% {
-                transform: rotate(-5deg);
-            }
-            75% {
-                transform: rotate(5deg);
-            }
-        }
-
-        h1 {
-            font-size: 32px;
-            margin-bottom: 15px;
-        }
-
-        p {
-            font-size: 18px;
-            margin-bottom: 30px;
-            opacity: 0.9;
-        }
-
-        .buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            background: white;
-            color: #667eea;
-            padding: 15px 35px;
-            border: none;
-            border-radius: 50px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            transition: all 0.3s;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-        }
-
-        .btn-outline {
-            background: transparent;
-            color: white;
-            border: 2px solid white;
-        }
-
-        .btn-outline:hover {
-            background: white;
-            color: #667eea;
-        }
-
-        .suggestions {
-            margin-top: 40px;
-            background: rgba(255,255,255,0.1);
-            padding: 25px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
-
-        .suggestions h3 {
-            font-size: 20px;
-            margin-bottom: 15px;
-        }
-
-        .suggestions ul {
-            list-style: none;
-            text-align: right;
-        }
-
-        .suggestions li {
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .suggestions li:last-child {
-            border-bottom: none;
-        }
-
-        .suggestions li:before {
-            content: "✓ ";
-            margin-left: 10px;
-            color: #4CAF50;
-            font-weight: bold;
-        }
-
-        @media (max-width: 768px) {
-            .error-code {
-                font-size: 80px;
-            }
-
-            .error-emoji {
-                font-size: 60px;
-            }
-
-            h1 {
-                font-size: 24px;
-            }
-
-            p {
-                font-size: 16px;
-            }
-
-            .buttons {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-            }
-        }
-
-        .footer {
-            margin-top: 40px;
-            font-size: 14px;
-            opacity: 0.7;
-        }
-    </style>
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#0b0d12">
+    <!-- CSP: راجع الشرح في index.html -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' https://www.gstatic.com;
+        style-src 'self' https://fonts.googleapis.com;
+        font-src https://fonts.gstatic.com;
+        img-src 'self' data: https://www.google.com;
+        connect-src https://firestore.googleapis.com https://*.googleapis.com
+                    http://127.0.0.1:8080;
+        base-uri 'none';
+        form-action 'none'">
+    <title>جاري التحويل…</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap">
+    <link rel="stylesheet" href="./shared.css">
+    <link rel="stylesheet" href="./redirect.css">
 </head>
 <body>
-    <div class="error-container">
-        <div class="error-emoji">🔍</div>
-        <div class="error-code">404</div>
-        <h1>عذراً! الصفحة غير موجودة</h1>
-        <p>الرابط الذي تبحث عنه غير موجود أو تم نقله إلى مكان آخر</p>
+    <!--
+      هذه الصفحة بوابة كل الروابط الفرعية، لا صفحة خطأ فحسب.
+
+      GitHub Pages موقع ثابت بلا توجيه من الخادم: أي طلب لمسار غير موجود
+      كملف — وكل روابط QR الفرعية كذلك — يُخدَم من 404.html. لذلك تبدأ
+      الصفحة بمحاولة التحويل، ولا تُعرض واجهة "غير موجود" إلا بعد فشل
+      البحث فعلًا.
+    -->
+
+    <svg class="sprite" aria-hidden="true">
+        <symbol id="i-alert" viewBox="0 0 24 24">
+            <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/>
+        </symbol>
+        <symbol id="i-check" viewBox="0 0 24 24">
+            <path d="m20 6-11 11-5-5"/>
+        </symbol>
+        <symbol id="i-home" viewBox="0 0 24 24">
+            <path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/>
+        </symbol>
+        <symbol id="i-sliders" viewBox="0 0 24 24">
+            <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>
+        </symbol>
+    </svg>
+
+    <div class="state" id="loading" role="status" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <h1>جاري التحويل</h1>
+        <p id="status">يرجى الانتظار</p>
+    </div>
+
+    <div class="state" id="failure" hidden role="alert">
+        <span class="failure-mark" aria-hidden="true">
+            <svg class="icon"><use href="#i-alert"/></svg>
+        </span>
+        <span class="code">404</span>
+        <h1>الرابط غير متاح</h1>
+        <p id="failure-message"></p>
 
         <div class="buttons">
-            <a href="/" class="btn">🏠 العودة للرئيسية</a>
-            <a href="/QR-Convert/admin.html" class="btn btn-outline">🎛️ لوحة التحكم</a>
+            <a href="./" class="btn btn-quiet">
+                <svg class="icon" aria-hidden="true"><use href="#i-home"/></svg>
+                الصفحة الرئيسية
+            </a>
+            <a href="./admin.html" class="btn btn-quiet">
+                <svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg>
+                لوحة التحكم
+            </a>
         </div>
 
         <div class="suggestions">
-            <h3>💡 بعض الاقتراحات:</h3>
+            <h2>احتمالات</h2>
             <ul>
-                <li>تحقق من صحة الرابط المُدخل</li>
-                <li>تأكد من أن الرابط مُفعّل في لوحة التحكم</li>
-                <li>الرابط قد يكون حساساً لحالة الأحرف (link1 ≠ Link1)</li>
-                <li>جرب إنشاء الرابط من لوحة التحكم أولاً</li>
+                <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>الرابط غير مُنشأ في لوحة التحكم بعد</li>
+                <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>الرابط مُنشأ لكنه معطَّل مؤقتًا</li>
+                <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>الاسم حسّاس لحالة الأحرف: link1 ليست Link1</li>
             </ul>
         </div>
 
-        <div class="footer">
-            <p>QR Redirect System • Powered by Firebase & GitHub Pages</p>
-        </div>
+        <p class="footer">QR Redirect • Firebase &amp; GitHub Pages</p>
     </div>
 
-    <script>
-        // تحليل بسيط لمعرفة الرابط المطلوب
-        const path = window.location.pathname;
-        console.log('المسار المطلوب:', path);
-        
-        // يمكن إضافة تتبع للروابط الخاطئة هنا
-        // مثلاً: إرسال لـ Google Analytics أو Firestore
-    </script>
+    <script type="module" src="./redirect-page.js"></script>
 </body>
 </html>

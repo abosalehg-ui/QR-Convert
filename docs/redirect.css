@@ -1,0 +1,193 @@
+/* صفحتا التحويل: index.html (الجذر) و 404.html (الروابط الفرعية).
+   لوحة داكنة ثابتة — الصفحة لحظية ولا ينبغي أن تومض بين وضعين. */
+
+body {
+  display: grid;
+  place-items: center;
+  padding: var(--s5);
+  background: #0b0d12;
+  color: #eef1f6;
+  min-height: 100dvh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* هالة لونية خفيفة خلف المحتوى بدل التدرّج الممتلئ */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::before {
+  background: #4f46e5;
+  top: -220px;
+  inset-inline-start: -160px;
+}
+
+body::after {
+  background: #0e7490;
+  bottom: -260px;
+  inset-inline-end: -180px;
+}
+
+.state {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 460px;
+  text-align: center;
+  animation: rise 0.4s var(--ease) both;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+}
+
+/* ------------------------------ التحميل ------------------------------ */
+
+.spinner {
+  width: 34px;
+  height: 34px;
+  margin: 0 auto var(--s5);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  border-top-color: #fff;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.state h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: var(--s2);
+}
+
+.state p {
+  color: #a8b0bf;
+  font-size: 14.5px;
+}
+
+/* ------------------------------ الفشل ------------------------------ */
+
+/* بطاقة زجاجية تفصل حالة الفشل عن الخلفية بلا صندوق ثقيل */
+#failure {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: var(--s6) var(--s5);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-lg);
+}
+
+.failure-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: var(--s4);
+  border-radius: var(--r-md);
+  background: rgba(242, 100, 107, 0.12);
+  color: #f2646b;
+}
+
+.failure-mark .icon {
+  width: 26px;
+  height: 26px;
+}
+
+.code {
+  display: block;
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.24em;
+  color: #6b7484;
+  margin-bottom: var(--s3);
+}
+
+#failure-message {
+  color: #d5dae4;
+  margin-bottom: var(--s2);
+}
+
+.buttons {
+  display: flex;
+  gap: var(--s3);
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: var(--s5);
+}
+
+.buttons .btn {
+  text-decoration: none;
+  flex: 1 1 160px;
+}
+
+.buttons .btn-quiet {
+  background: rgba(255, 255, 255, 0.06);
+  color: #eef1f6;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.buttons .btn-quiet:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.suggestions {
+  margin-top: var(--s5);
+  padding-top: var(--s5);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: start;
+}
+
+.suggestions h2 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #8b93a3;
+  margin-bottom: var(--s3);
+}
+
+.suggestions ul {
+  list-style: none;
+  display: grid;
+  gap: var(--s2);
+}
+
+.suggestions li {
+  display: flex;
+  gap: var(--s2);
+  align-items: flex-start;
+  font-size: 13.5px;
+  color: #a8b0bf;
+}
+
+.suggestions .icon {
+  width: 15px;
+  height: 15px;
+  margin-top: 4px;
+  color: #4f46e5;
+}
+
+.footer {
+  margin-top: var(--s5);
+  font-size: 12px;
+  color: #6b7484;
+}
+
+@media (max-width: 520px) {
+  .buttons { flex-direction: column; }
+  /* في العمود يصبح flex-basis ارتفاعًا لا عرضًا، فتتضخّم الأزرار */
+  .buttons .btn { flex: none; width: 100%; }
+  #failure { padding: var(--s5) var(--s4); }
+}

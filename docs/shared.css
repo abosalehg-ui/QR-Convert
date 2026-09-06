@@ -1,0 +1,383 @@
+/* ============================================================================
+   نظام التصميم — مصدر واحد لكل الرموز البصرية في الصفحات الثلاث.
+
+   المنهج: سطح محايد، لون واحد للتمييز، حدود دقيقة بدل الظلال الثقيلة،
+   ومقياس مسافات ثابت. الوضع الداكن يتبع تفضيل النظام تلقائيًا.
+   ============================================================================ */
+
+:root {
+  color-scheme: light dark;
+
+  /* ---- الألوان: سطح ونص ---- */
+  --canvas: #f7f8fa;
+  --surface: #ffffff;
+  --surface-2: #f2f4f7;
+  --surface-3: #e9ecf1;
+  --ink: #0d1117;
+  --ink-2: #4a5261;
+  --ink-3: #6b7484;
+  --line: #e3e6ec;
+  --line-strong: #cdd3dd;
+
+  /* ---- لون التمييز ---- */
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-soft: #eef0fe;
+  --accent-ink: #ffffff;
+
+  /* ---- ألوان دلالية ---- */
+  --ok: #0f9d58;
+  --ok-soft: #e7f6ee;
+  --warn: #b26a00;
+  --warn-soft: #fdf3e2;
+  --danger: #d93b3b;
+  --danger-hover: #bd2f2f;
+  --danger-soft: #fdecec;
+
+  /* ---- مقياس المسافات (خطوة 4px) ---- */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+
+  /* ---- الأنصاف والحدود والظلال ---- */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-full: 999px;
+  --shadow-sm: 0 1px 2px rgba(13, 17, 23, 0.06);
+  --shadow-md: 0 4px 16px -4px rgba(13, 17, 23, 0.1), 0 1px 3px rgba(13, 17, 23, 0.05);
+  --shadow-lg: 0 24px 60px -20px rgba(13, 17, 23, 0.28);
+
+  /* ---- الحد الأدنى لمساحة اللمس ---- */
+  --touch: 44px;
+
+  /* ---- الخطوط ---- */
+  --font: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, 'Noto Sans Arabic',
+          'Geeza Pro', system-ui, sans-serif;
+  --mono: 'SFMono-Regular', ui-monospace, 'Cascadia Mono', Menlo, monospace;
+
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* الوضع الداكن: نفس الأسماء بقيم مختلفة، فلا يعرف بقية الـ CSS أنه موجود */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: #0b0d12;
+    --surface: #14171d;
+    --surface-2: #1b1f27;
+    --surface-3: #232833;
+    --ink: #eef1f6;
+    --ink-2: #b3bac7;
+    --ink-3: #8b93a3;
+    --line: #262b35;
+    --line-strong: #363d4a;
+
+    --accent: #7c78f0;
+    --accent-hover: #918de6;
+    --accent-soft: #1e1f3d;
+
+    --ok: #3ecf8e;
+    --ok-soft: #10261d;
+    --warn: #e0a75e;
+    --warn-soft: #2a2013;
+    --danger: #f2646b;
+    --danger-hover: #f37f85;
+    --danger-soft: #2c1618;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 16px -4px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, 0.75);
+  }
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--canvas);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+
+code, kbd {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  direction: ltr;
+  unicode-bidi: embed;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* ------------------------------ الأيقونات ------------------------------ */
+
+/* مستودع رموز SVG في أعلى كل صفحة، يُشار إليه بـ <use> */
+.sprite {
+  display: none;
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-lg {
+  width: 24px;
+  height: 24px;
+}
+
+/* ------------------------------ الأزرار ------------------------------ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  min-height: var(--touch);
+  padding: 0 var(--s4);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease),
+              transform 0.15s var(--ease), opacity 0.15s var(--ease);
+}
+
+.btn:hover:not(:disabled) { background: var(--accent-hover); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ثانوي: الشكل الافتراضي لأزرار الإجراءات في القوائم */
+.btn-ghost {
+  background: var(--surface);
+  color: var(--ink-2);
+  border-color: var(--line-strong);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--ink);
+  border-color: var(--ink-3);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--danger);
+  border-color: var(--line-strong);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+}
+
+.btn-danger-solid {
+  background: var(--danger);
+  color: #fff;
+  border-color: transparent;
+}
+
+.btn-danger-solid:hover:not(:disabled) { background: var(--danger-hover); }
+
+.btn-block { width: 100%; }
+
+/* زر أيقونة مربّع بلا نص مرئي */
+.btn-icon {
+  width: var(--touch);
+  min-height: var(--touch);
+  padding: 0;
+  background: transparent;
+  color: var(--ink-3);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.btn-icon:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+/* حالة الانشغال: نقطة نابضة مكان الأيقونة أثناء تنفيذ عملية */
+.btn.is-busy .icon,
+.btn-icon.is-busy .icon {
+  animation: pulse 1s var(--ease) infinite;
+}
+
+@keyframes pulse {
+  50% { opacity: 0.35; }
+}
+
+/* ------------------------------ التركيز ------------------------------ */
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* ------------------------------ الحقول ------------------------------ */
+
+.field {
+  display: grid;
+  gap: var(--s2);
+}
+
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  min-height: var(--touch);
+  padding: var(--s3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--ink-3);
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 88px;
+  line-height: 1.6;
+}
+
+.hint {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  line-height: 1.7;
+}
+
+/* ------------------------------ البطاقات ------------------------------ */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s5) var(--s5) 0;
+}
+
+.card-head h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.card-body {
+  padding: var(--s5);
+}
+
+/* ------------------------------ الشارات ------------------------------ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+  padding: 3px var(--s2);
+  border-radius: var(--r-full);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.badge-ok { background: var(--ok-soft); color: var(--ok); }
+.badge-off { background: var(--surface-3); color: var(--ink-3); }
+
+/* ------------------------------ الوصول ------------------------------ */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
