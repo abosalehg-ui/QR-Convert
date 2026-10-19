@@ -3,12 +3,13 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { resolveLinkName, safeTargetUrl } from '../docs/link-utils.js';
+import { readFileSync } from 'node:fs';
+import { resolveLinkName, safeTargetUrl, isValidLinkName } from '../docs/link-utils.js';
 
 const BASE = '/QR-Convert/';
 
 test('الجذر يعطي main لا اسم المستودع', () => {
-  // هذه هي العلة بعينها: pop() كانت ترجع "QR-Convert" (البند 3)
+  // هذه هي العلة بعينها: pop() كانت ترجع "QR-Convert"
   assert.equal(resolveLinkName('/QR-Convert/', BASE), 'main');
   assert.equal(resolveLinkName('/QR-Convert', BASE), 'main');
   assert.equal(resolveLinkName('/QR-Convert/index.html', BASE), 'main');
@@ -45,7 +46,7 @@ test('الوجهات الصالحة تمر', () => {
 });
 
 test('المخططات الخطرة تُرفض', () => {
-  // إعادة توجيه مفتوح / XSS مخزّن عبر وجهة الرابط (البند 5)
+  // إعادة توجيه مفتوح / XSS مخزّن عبر وجهة الرابط
   assert.equal(safeTargetUrl('javascript:alert(1)', 'https://site.test'), null);
   assert.equal(safeTargetUrl('data:text/html,<script>alert(1)</script>', 'https://site.test'), null);
   assert.equal(safeTargetUrl('vbscript:msgbox(1)', 'https://site.test'), null);
@@ -60,4 +61,40 @@ test('القيم الفارغة أو غير النصية تُرفض', () => {
 
 test('مسار يشبه الجذر بلا أن يكونه لا يُقتطع خطأً', () => {
   assert.equal(resolveLinkName('/QR-Convertible/x', BASE), 'QR-Convertible/x');
+});
+
+test('اسم الرابط: نفس شرط اللوحة والقواعد', () => {
+  for (const ok of ['main', 'link1', 'promo-2024', 'my_link', 'a'.repeat(64)]) {
+    assert.equal(isValidLinkName(ok), true, ok);
+  }
+  // 'a/b' هو ما يعطيه مسار متعدد الأجزاء — يجب أن يُرفض قبل الوصول لـ Firestore
+  for (const bad of ['', 'a/b', 'QR-Convertible/x', 'مرحبا', 'a b', 'a'.repeat(65), null, 7]) {
+    assert.equal(isValidLinkName(bad), false, String(bad));
+  }
+});
+
+// ------------------------- صفحتا التحويل -------------------------
+
+const page = (name) => readFileSync(new URL(`../docs/${name}`, import.meta.url), 'utf8');
+const csp = (html) => html
+  .match(/http-equiv="Content-Security-Policy"\s+content="([^"]+)"/)[1]
+  .replace(/\s+/g, ' ')
+  .trim();
+
+test('سياسة CSP متطابقة في index.html و 404.html', () => {
+  // السياسة مكررة في الصفحتين لأن الموقع ثابت بلا خطوة بناء. لو تغيّر نطاق
+  // في واحدة ونُسيت الثانية، انكسر التحويل في نصف الروابط بصمت.
+  assert.equal(csp(page('404.html')), csp(page('index.html')));
+});
+
+test('404.html تحمّل ملفاتها بمسارات مطلقة', () => {
+  // 404.html تُخدَم لأي مسار، منها /QR-Convert/main/ و /QR-Convert/a/b.
+  // مسار نسبي مثل ./redirect-page.js يُحسب حينها من /QR-Convert/main/
+  // فيرجع 404.html نفسها بنوع text/html، فلا يعمل السكربت وتعلق الصفحة
+  // على "جاري التحويل" للأبد.
+  const html = page('404.html');
+  const refs = [...html.matchAll(/(?:href|src)="([^"#]+)"/g)].map((m) => m[1])
+    .filter((ref) => !/^https?:/.test(ref));
+  assert.ok(refs.length > 0);
+  for (const ref of refs) assert.match(ref, /^\/QR-Convert\//, ref);
 });

@@ -3,15 +3,15 @@
 // لماذا في 404.html؟ GitHub Pages موقع ثابت: لا يوجد ملف اسمه `main`، فأي
 // طلب لـ /QR-Convert/main يُخدَم من 404.html. لذلك منطق التحويل يجب أن يعيش
 // هنا، وواجهة "الصفحة غير موجودة" هي حالة الفشل بعد البحث لا الحالة
-// الافتراضية (البند 2).
+// الافتراضية.
 
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js';
 import {
   getFirestore, doc, getDoc, updateDoc, increment, serverTimestamp,
   connectFirestoreEmulator
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { firebaseConfig, useEmulator, EMULATOR } from './firebase-config.js';
-import { resolveLinkName, safeTargetUrl } from './link-utils.js';
+import { resolveLinkName, safeTargetUrl, isValidLinkName } from './link-utils.js';
 
 const db = getFirestore(initializeApp(firebaseConfig));
 if (useEmulator) connectFirestoreEmulator(db, EMULATOR.firestoreHost, EMULATOR.firestorePort);
@@ -28,6 +28,13 @@ const CLICK_WRITE_BUDGET_MS = 800;
 export async function runRedirect({ onStatus = () => {}, onFail = () => {} } = {}) {
   const linkName = resolveLinkName(window.location.pathname, BASE_DIR);
   onStatus(`جاري تحميل الرابط: ${linkName}`);
+
+  // اسم لا يمكن أن يكون مسجّلًا (فيه / أو حروف غير مقبولة): لا داعي للشبكة،
+  // و doc() كانت سترمي خطأ مسار يظهر للزائر كأنه انقطاع اتصال.
+  if (!isValidLinkName(linkName)) {
+    onFail(`لا يوجد رابط مسجّل باسم "${linkName}".`, linkName);
+    return;
+  }
 
   let snapshot;
   try {
@@ -60,7 +67,7 @@ export async function runRedirect({ onStatus = () => {}, onFail = () => {} } = {
   //
   // الكود القديم كان ينتظره بـ await قبل التحويل، وقواعد Firestore كانت
   // ترفض كتابة الزائر غير المسجّل، فيقفز التنفيذ إلى catch ولا يُنفَّذ سطر
-  // التحويل إطلاقًا — أي أن كل زائر يرى صفحة خطأ (البند 1).
+  // التحويل إطلاقًا — أي أن كل زائر يرى صفحة خطأ.
   //
   // والعكس أيضًا لا يصح: إطلاق الكتابة بلا انتظار ثم التحويل فورًا يهدم
   // الصفحة قبل أن تغادر الكتابة المتصفح، فتضيع كل النقرات (أثبته اختبار

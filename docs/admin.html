@@ -76,6 +76,7 @@
         <symbol id="i-copy" viewBox="0 0 24 24">
             <rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
         </symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
         <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
         <symbol id="i-link" viewBox="0 0 24 24">
             <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/>
@@ -224,7 +225,7 @@
                             <div class="field">
                                 <label for="newLinkName">اسم الرابط</label>
                                 <input type="text" id="newLinkName" placeholder="link1" required
-                                       pattern="[a-zA-Z0-9_\-]+" inputmode="latin"
+                                       pattern="[a-zA-Z0-9_\-]+" maxlength="64" inputmode="latin"
                                        aria-describedby="newLinkNameHint" dir="ltr">
                                 <small class="hint" id="newLinkNameHint">
                                     العنوان النهائي: <code>…/QR-Convert/<span id="linkPreview">link1</span></code><br>
@@ -262,8 +263,13 @@
                 <div class="card-head">
                     <svg class="icon tint-accent" aria-hidden="true"><use href="#i-list"/></svg>
                     <h2>الروابط</h2>
+                    <div class="search">
+                        <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+                        <input type="search" id="linkSearch" placeholder="بحث بالاسم أو الوجهة أو الوصف"
+                               aria-label="بحث في الروابط" autocomplete="off">
+                    </div>
                 </div>
-                <div class="links" id="linksList"></div>
+                <div class="links" id="linksList" aria-live="polite"></div>
             </section>
         </main>
     </div>

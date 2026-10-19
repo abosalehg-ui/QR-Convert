@@ -172,6 +172,14 @@
   from { opacity: 0; transform: translateY(8px); }
 }
 
+/* رسالة الخطأ تبقى حتى تُغلق، فزر الإغلاق في طرفها */
+.alert-close {
+  margin-inline-start: auto;
+  min-height: 28px;
+  width: 28px;
+  color: inherit;
+}
+
 .alert.success {
   background: var(--ok-soft);
   border-color: color-mix(in srgb, var(--ok) 35%, transparent);
@@ -462,3 +470,44 @@
 .tint-accent { color: var(--accent); }
 .tint-danger { color: var(--danger); }
 .auth-mark-danger { background: var(--danger-soft); color: var(--danger); }
+
+/* ------------------------------ البحث ------------------------------ */
+
+.search {
+  position: relative;
+  margin-inline-start: auto;
+  width: min(280px, 100%);
+}
+
+.search .icon {
+  position: absolute;
+  inset-inline-start: var(--s3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-3);
+  pointer-events: none;
+}
+
+.search input {
+  width: 100%;
+  min-height: var(--touch);
+  padding-block: var(--s2);
+  padding-inline: calc(var(--s3) * 2 + 16px) var(--s3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+}
+
+.search input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+@media (max-width: 640px) {
+  .card-head:has(.search) { flex-wrap: wrap; }
+  .search { width: 100%; }
+}

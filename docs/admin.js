@@ -1,41 +1,30 @@
-// لوحة تحكم QR Redirect.
+// لوحة تحكم QR Redirect — العرض والتفاعل.
+//
+// عمليات Firestore في links-repo.js، والنوافذ المنبثقة في modals.js.
 //
 // مبادئ هذا الملف:
 // 1) لا innerHTML مع بيانات قادمة من Firestore — كل نص يُوضع بـ textContent،
 //    وكل عنصر يُبنى بـ createElement. الكود السابق كان يحقن الوصف والوجهة
 //    وإيميل المعدِّل داخل قوالب HTML، وهو مسار XSS مخزّن يفتح على أي مسؤول
-//    آخر بصلاحياته الكاملة (البند 6).
+//    آخر بصلاحياته الكاملة.
 // 2) لا onclick داخل HTML — مستمع واحد على الحاوية يقرأ data-action.
-// 3) كل عملية شبكة تعطّل زرها وتُظهر نصًا يدل على أنها جارية (البند 11).
+// 3) كل عملية شبكة تعطّل زرها وتُظهر نصًا يدل على أنها جارية.
 
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import {
-  getAuth, signInWithPopup, signInWithEmailAndPassword, GoogleAuthProvider,
-  onAuthStateChanged, signOut, connectAuthEmulator
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import {
-  getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc,
-  setDoc, writeBatch, query, orderBy, serverTimestamp, connectFirestoreEmulator
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { firebaseConfig, LOCALE, useEmulator, EMULATOR } from './firebase-config.js';
-import { safeTargetUrl } from './link-utils.js';
+  signInWithPopup, signInWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, signOut
+} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
+import { LOCALE } from './firebase-config.js';
+import { safeTargetUrl, isValidLinkName } from './link-utils.js';
+import * as repo from './links-repo.js';
+import { openModal, closeModal, confirmDialog } from './modals.js';
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-if (useEmulator) {
-  connectFirestoreEmulator(db, EMULATOR.firestoreHost, EMULATOR.firestorePort);
-  connectAuthEmulator(auth, EMULATOR.authUrl, { disableWarnings: true });
-}
-
+const { auth } = repo;
 const $ = (id) => document.getElementById(id);
 
-// مستند لا يُنشأ أبدًا — يُستعمل لسؤال القواعد عن الصلاحية فقط.
-const ACCESS_PROBE_ID = 'access-probe';
-
 let currentUser = null;
-let lastFocusedElement = null;
+
+// آخر قائمة محمّلة — البحث يرشّحها بلا قراءة جديدة من Firestore.
+let allLinks = [];
 
 // ---------------------------------------------------------------------------
 // رسائل الخطأ
@@ -43,7 +32,7 @@ let lastFocusedElement = null;
 
 // رموز Firebase تقنية وإنجليزية ولا تصلح لعرضها كما هي على المستخدم،
 // والكود السابق كان يعرض نصًا مثل "Firebase: Error (auth/wrong-password)"
-// ملصوقًا بعد جملة عربية (البند 11).
+// ملصوقًا بعد جملة عربية.
 const AUTH_MESSAGES = {
   'auth/invalid-email': 'صيغة البريد الإلكتروني غير صحيحة.',
   'auth/user-not-found': 'لا يوجد حساب بهذا البريد الإلكتروني.',
@@ -59,7 +48,8 @@ const AUTH_MESSAGES = {
 const FIRESTORE_MESSAGES = {
   'permission-denied': 'ليست لديك صلاحية لهذه العملية.',
   unavailable: 'تعذّر الاتصال بقاعدة البيانات. تحقق من اتصالك بالإنترنت.',
-  'deadline-exceeded': 'استغرقت العملية وقتًا طويلًا. أعد المحاولة.'
+  'deadline-exceeded': 'استغرقت العملية وقتًا طويلًا. أعد المحاولة.',
+  'not-found': 'الرابط لم يعد موجودًا. حدّث الصفحة.'
 };
 
 function humanError(error) {
@@ -72,7 +62,6 @@ function humanError(error) {
 // ---------------------------------------------------------------------------
 
 let successTimer;
-let errorTimer;
 
 function fillAlert(node, iconName, message) {
   node.replaceChildren(icon(iconName), el('span', null, message));
@@ -86,11 +75,21 @@ function showSuccess(message) {
   successTimer = setTimeout(() => { node.hidden = true; }, 4000);
 }
 
+/**
+ * رسالة الخطأ تبقى حتى يغلقها المستخدم.
+ *
+ * كانت تختفي بعد ثماني ثوانٍ، فتفوت مستخدم قارئ الشاشة البطيء أو من
+ * التفت عن الشاشة لحظة — والخطأ تحديدًا هو ما لا يصح أن يفوته.
+ */
 function showError(message) {
   const node = $('errorAlert');
   fillAlert(node, 'alert', message);
-  clearTimeout(errorTimer);
-  errorTimer = setTimeout(() => { node.hidden = true; }, 8000);
+  const close = el('button', 'btn-icon alert-close');
+  close.type = 'button';
+  close.setAttribute('aria-label', 'إغلاق رسالة الخطأ');
+  close.append(icon('x'));
+  close.addEventListener('click', () => { node.hidden = true; });
+  node.append(close);
 }
 
 /**
@@ -126,8 +125,7 @@ async function withBusy(button, busyLabel, task) {
 
 /**
  * serverTimestamp() ترجع null محليًا حتى يؤكدها الخادم، فأول عرض بعد إضافة
- * رابط جديد كان يرمي "Cannot read properties of null" ويسقط القائمة كلها
- * (البند 8).
+ * رابط جديد كان يرمي "Cannot read properties of null" ويسقط القائمة كلها.
  */
 function formatTimestamp(value, fallback = '—') {
   if (!value || typeof value.toDate !== 'function') return fallback;
@@ -142,53 +140,42 @@ function formatTimestamp(value, fallback = '—') {
 // المصادقة
 // ---------------------------------------------------------------------------
 
-/**
- * يتحقق أن المستخدم الحالي مسؤول فعلًا — بسؤال القواعد نفسها.
- *
- * مجموعة meta الفرعية مقروءة للمسؤولين فقط، والقواعد تُقيّم الصلاحية قبل
- * وجود المستند: المسؤول يحصل على لقطة فارغة، وغيره على permission-denied.
- * الفائدة: لا حاجة لتكرار قائمة الإيميلات في كود الواجهة.
- *
- * هذا حاجز واجهة لا حاجز أمني — الحماية الحقيقية تبقى في firestore.rules.
- *
- * المعرّف اسم عادي عمدًا: Firestore يرفض أي معرّف يبدأ وينتهي بشرطتين
- * سفليتين (محجوز)، فيفشل الفحص بخطأ invalid-argument لا permission-denied
- * ويُحرم المسؤول نفسه من الدخول.
- */
-async function hasAdminAccess() {
-  try {
-    await getDoc(doc(db, 'links', ACCESS_PROBE_ID, 'meta', 'probe'));
-    return true;
-  } catch {
-    return false;
+function showOnly(id) {
+  for (const section of ['bootState', 'loginContainer', 'deniedContainer', 'dashboard']) {
+    $(section).hidden = section !== id;
   }
 }
 
 onAuthStateChanged(auth, async (user) => {
   currentUser = user;
-  $('bootState').hidden = true;
 
   if (!user) {
-    $('loginContainer').hidden = false;
-    $('dashboard').hidden = true;
-    $('deniedContainer').hidden = true;
+    showOnly('loginContainer');
     return;
   }
-
-  $('loginContainer').hidden = true;
 
   // اللوحة كانت تُعرض لأي مستخدم Google مسجّل لمجرد أنه مسجّل. الكتابة كانت
   // ترفضها القواعد، لكن الضيف يرى البنية والإحصائيات ورسائل الأخطاء بلا
-  // داعٍ (البند 7).
-  if (!(await hasAdminAccess())) {
-    $('dashboard').hidden = true;
-    $('deniedEmail').textContent = user.email || '';
-    $('deniedContainer').hidden = false;
+  // داعٍ.
+  let isAdmin;
+  try {
+    isAdmin = await repo.hasAdminAccess();
+  } catch (error) {
+    // تعذّر السؤال أصلًا (شبكة، مهلة) — لا نعرف الجواب، فلا نقول "ممنوع".
+    // نخرج ونعرض السبب، فيعيد المستخدم الدخول متى عادت الشبكة.
+    console.error(error);
+    showLoginError('تعذّر التحقق من الصلاحية: ' + humanError(error));
+    await signOut(auth).catch(() => {});
     return;
   }
 
-  $('deniedContainer').hidden = true;
-  $('dashboard').hidden = false;
+  if (!isAdmin) {
+    $('deniedEmail').textContent = user.email || '';
+    showOnly('deniedContainer');
+    return;
+  }
+
+  showOnly('dashboard');
   $('userEmail').textContent = user.email || '';
   await loadDashboard();
 });
@@ -244,28 +231,26 @@ function showLoginError(message) {
 async function loadDashboard() {
   try {
     // قراءة واحدة للمجموعة تخدم الإحصائيات والقائمة معًا.
-    // الكود السابق كان ينفّذ getDocs مرتين في كل تحميل (البند 13).
-    const snapshot = await getDocs(collection(db, 'links'));
-    renderStats(snapshot);
-    renderLinks(snapshot);
+    allLinks = await repo.fetchLinks();
+    renderStats(allLinks);
+    renderLinks();
   } catch (error) {
     console.error(error);
     showError('فشل تحميل البيانات: ' + humanError(error));
   }
 }
 
-function renderStats(snapshot) {
+function renderStats(links) {
   let totalClicks = 0;
   let activeCount = 0;
 
-  snapshot.forEach((docSnap) => {
-    const data = docSnap.data();
+  for (const { data } of links) {
     totalClicks += data.clicks || 0;
     if (data.active) activeCount += 1;
-  });
+  }
 
   $('totalClicks').textContent = totalClicks.toLocaleString(LOCALE);
-  $('totalLinks').textContent = snapshot.size.toLocaleString(LOCALE);
+  $('totalLinks').textContent = links.length.toLocaleString(LOCALE);
   $('activeLinks').textContent = activeCount.toLocaleString(LOCALE);
 }
 
@@ -306,84 +291,103 @@ function actionButton(iconName, ariaLabel, action, linkId, extraClass) {
   return button;
 }
 
-function renderLinks(snapshot) {
+function emptyState(iconName, message) {
+  const empty = el('div', 'empty-state');
+  empty.append(icon(iconName), el('p', null, message));
+  return empty;
+}
+
+/** يطابق البحث الاسم أو الوجهة أو الوصف، بلا حساسية لحالة الأحرف. */
+function matchesSearch({ id, data }, term) {
+  if (!term) return true;
+  return [id, data.url, data.description]
+    .some((value) => typeof value === 'string' && value.toLowerCase().includes(term));
+}
+
+function renderLinks() {
   const list = $('linksList');
   list.replaceChildren();
 
-  if (snapshot.empty) {
-    const empty = el('div', 'empty-state');
-    empty.append(icon('inbox'), el('p', null, 'لا توجد روابط بعد. أضف أول رابط من النموذج أعلاه.'));
-    list.append(empty);
+  if (!allLinks.length) {
+    list.append(emptyState('inbox', 'لا توجد روابط بعد. أضف أول رابط من النموذج أعلاه.'));
+    return;
+  }
+
+  const term = $('linkSearch').value.trim().toLowerCase();
+  const visible = allLinks.filter((link) => matchesSearch(link, term));
+
+  if (!visible.length) {
+    list.append(emptyState('search', `لا توجد روابط تطابق "${term}".`));
     return;
   }
 
   const base = new URL('./', window.location.href).href;
-
-  snapshot.forEach((docSnap) => {
-    const data = docSnap.data();
-    const linkId = docSnap.id;
-    const fullUrl = base + linkId;
-
-    const item = el('div', 'link-item');
-
-    // ---- الترويسة: الاسم، الحالة، ثم أزرار الإجراءات ----
-    const header = el('div', 'link-header');
-    header.append(el('span', 'link-name', linkId));
-    header.append(el(
-      'span',
-      `badge ${data.active ? 'badge-ok' : 'badge-off'}`,
-      data.active ? 'نشط' : 'معطَّل'
-    ));
-
-    const actions = el('div', 'link-actions');
-    actions.append(actionButton('edit', `تعديل الرابط ${linkId}`, 'edit', linkId));
-    actions.append(actionButton('history', `عرض أرشيف تعديلات ${linkId}`, 'history', linkId));
-    actions.append(actionButton(
-      data.active ? 'pause' : 'play',
-      `${data.active ? 'تعطيل' : 'تفعيل'} الرابط ${linkId}`,
-      'toggle',
-      linkId
-    ));
-    actions.append(actionButton('trash', `حذف الرابط ${linkId}`, 'delete', linkId));
-    header.append(actions);
-    item.append(header);
-
-    // ---- العنوان القصير مع زر نسخه ----
-    const urlRow = el('div', 'link-url');
-    const copyBtn = el('button', 'btn-icon');
-    copyBtn.type = 'button';
-    copyBtn.title = `نسخ رابط ${linkId}`;
-    copyBtn.setAttribute('aria-label', `نسخ رابط ${linkId}`);
-    copyBtn.dataset.action = 'copy';
-    copyBtn.dataset.value = fullUrl;
-    copyBtn.append(icon('copy'));
-    urlRow.append(copyBtn, el('span', null, fullUrl));
-    item.append(urlRow);
-
-    // ---- الوجهة والوصف ----
-    const target = el('div', 'link-target');
-    target.append(icon('link'), el('span', null, data.url || '—'));
-    item.append(target);
-
-    if (data.description) item.append(el('div', 'link-desc', data.description));
-
-    // ---- الإحصائيات ----
-    const stats = el('div', 'link-stats');
-    const clicks = el('span');
-    clicks.append(icon('cursor'), el('span', null,
-      `${(data.clicks || 0).toLocaleString(LOCALE)} نقرة`));
-    const last = el('span');
-    last.append(icon('clock'), el('span', null,
-      `آخر نقرة: ${formatTimestamp(data.lastClicked, 'لا شيء بعد')}`));
-    const created = el('span');
-    created.append(icon('calendar'), el('span', null,
-      `تم الإنشاء: ${formatTimestamp(data.createdAt)}`));
-    stats.append(clicks, last, created);
-    item.append(stats);
-
-    list.append(item);
-  });
+  for (const link of visible) list.append(linkItem(link, base));
 }
+
+function linkItem({ id: linkId, data }, base) {
+  const fullUrl = base + linkId;
+  const item = el('div', 'link-item');
+
+  // ---- الترويسة: الاسم، الحالة، ثم أزرار الإجراءات ----
+  const header = el('div', 'link-header');
+  header.append(el('span', 'link-name', linkId));
+  header.append(el(
+    'span',
+    `badge ${data.active ? 'badge-ok' : 'badge-off'}`,
+    data.active ? 'نشط' : 'معطَّل'
+  ));
+
+  const actions = el('div', 'link-actions');
+  actions.append(actionButton('edit', `تعديل الرابط ${linkId}`, 'edit', linkId));
+  actions.append(actionButton('history', `عرض أرشيف تعديلات ${linkId}`, 'history', linkId));
+  actions.append(actionButton(
+    data.active ? 'pause' : 'play',
+    `${data.active ? 'تعطيل' : 'تفعيل'} الرابط ${linkId}`,
+    'toggle',
+    linkId
+  ));
+  actions.append(actionButton('trash', `حذف الرابط ${linkId}`, 'delete', linkId));
+  header.append(actions);
+  item.append(header);
+
+  // ---- العنوان القصير مع زر نسخه ----
+  const urlRow = el('div', 'link-url');
+  const copyBtn = el('button', 'btn-icon');
+  copyBtn.type = 'button';
+  copyBtn.title = `نسخ رابط ${linkId}`;
+  copyBtn.setAttribute('aria-label', `نسخ رابط ${linkId}`);
+  copyBtn.dataset.action = 'copy';
+  copyBtn.dataset.value = fullUrl;
+  copyBtn.append(icon('copy'));
+  urlRow.append(copyBtn, el('span', null, fullUrl));
+  item.append(urlRow);
+
+  // ---- الوجهة والوصف ----
+  const target = el('div', 'link-target');
+  target.append(icon('link'), el('span', null, data.url || '—'));
+  item.append(target);
+
+  if (data.description) item.append(el('div', 'link-desc', data.description));
+
+  // ---- الإحصائيات ----
+  const stats = el('div', 'link-stats');
+  const clicks = el('span');
+  clicks.append(icon('cursor'), el('span', null,
+    `${(data.clicks || 0).toLocaleString(LOCALE)} نقرة`));
+  const last = el('span');
+  last.append(icon('clock'), el('span', null,
+    `آخر نقرة: ${formatTimestamp(data.lastClicked, 'لا شيء بعد')}`));
+  const created = el('span');
+  created.append(icon('calendar'), el('span', null,
+    `تم الإنشاء: ${formatTimestamp(data.createdAt)}`));
+  stats.append(clicks, last, created);
+  item.append(stats);
+
+  return item;
+}
+
+$('linkSearch').addEventListener('input', renderLinks);
 
 // مستمع واحد للقائمة كلها بدل onclick مضمّن في كل زر.
 $('linksList').addEventListener('click', (event) => {
@@ -409,8 +413,8 @@ $('addLinkForm').addEventListener('submit', async (event) => {
   const url = $('newLinkUrl').value.trim();
   const description = $('newLinkDesc').value.trim();
 
-  if (!/^[a-zA-Z0-9_-]+$/.test(name)) {
-    showError('اسم الرابط يقبل الحروف الإنجليزية والأرقام والشرطتين فقط.');
+  if (!isValidLinkName(name)) {
+    showError('اسم الرابط يقبل الحروف الإنجليزية والأرقام والشرطتين فقط، بحد أقصى 64 حرفًا.');
     return;
   }
 
@@ -421,29 +425,23 @@ $('addLinkForm').addEventListener('submit', async (event) => {
 
   await withBusy($('addLinkBtn'), 'جارٍ الحفظ…', async () => {
     try {
-      const linkRef = doc(db, 'links', name);
-      if ((await getDoc(linkRef)).exists()) {
+      if (await repo.linkExists(name)) {
         showError('اسم الرابط موجود مسبقًا، اختر اسمًا آخر.');
         return;
       }
 
-      // المستند العام يحمل ما يحتاجه التحويل فقط. إيميل من أنشأ الرابط
-      // ينتقل إلى meta/admin المقروءة للمسؤولين وحدهم، لأن مجموعة links
-      // مقروءة للجميع بالضرورة (البند 7).
-      const batch = writeBatch(db);
-      batch.set(linkRef, {
-        url,
-        description,
-        active: true,
-        clicks: 0,
-        createdAt: serverTimestamp(),
-        lastClicked: null
-      });
-      batch.set(doc(db, 'links', name, 'meta', 'admin'), {
-        createdBy: currentUser.email,
-        createdAt: serverTimestamp()
-      });
-      await batch.commit();
+      // حذف الرابط لا يحذف أرشيفه، فالاسم المُعاد استخدامه يرث سجل الرابط
+      // القديم. لا نمنع ذلك (قد يكون مقصودًا) لكن لا نخفيه.
+      if (await repo.hasHistory(name)) {
+        const proceed = await confirmDialog(
+          'اسم مستخدم سابقًا',
+          `الاسم "${name}" كان لرابط حُذف، وأرشيف تعديلاته ما زال محفوظًا. الرابط الجديد سيظهر معه نفس الأرشيف. متابعة؟`,
+          'متابعة'
+        );
+        if (!proceed) return;
+      }
+
+      await repo.createLink(name, { url, description }, currentUser.email);
 
       showSuccess('تم إضافة الرابط بنجاح!');
       $('addLinkForm').reset();
@@ -460,22 +458,17 @@ $('newLinkName').addEventListener('input', (event) => {
   $('linkPreview').textContent = event.target.value || 'link1';
 });
 
-async function openEditModal(linkId, trigger) {
-  try {
-    const snapshot = await getDoc(doc(db, 'links', linkId));
-    if (!snapshot.exists()) {
-      showError('الرابط لم يعد موجودًا. حدّث الصفحة.');
-      return;
-    }
-    const data = snapshot.data();
-    $('editLinkId').value = linkId;
-    $('editLinkName').textContent = linkId;
-    $('editLinkUrl').value = data.url || '';
-    $('editLinkDesc').value = data.description || '';
-    openModal('editModal', trigger);
-  } catch (error) {
-    showError('فشل تحميل بيانات الرابط: ' + humanError(error));
+function openEditModal(linkId, trigger) {
+  const link = allLinks.find((item) => item.id === linkId);
+  if (!link) {
+    showError(FIRESTORE_MESSAGES['not-found']);
+    return;
   }
+  $('editLinkId').value = linkId;
+  $('editLinkName').textContent = linkId;
+  $('editLinkUrl').value = link.data.url || '';
+  $('editLinkDesc').value = link.data.description || '';
+  openModal('editModal', trigger);
 }
 
 $('editLinkForm').addEventListener('submit', async (event) => {
@@ -492,18 +485,7 @@ $('editLinkForm').addEventListener('submit', async (event) => {
 
   await withBusy($('editLinkBtn'), 'جارٍ الحفظ…', async () => {
     try {
-      const linkRef = doc(db, 'links', linkId);
-      const oldData = (await getDoc(linkRef)).data();
-
-      await addDoc(collection(db, 'links', linkId, 'history'), {
-        url: oldData.url,
-        description: oldData.description || '',
-        changedAt: serverTimestamp(),
-        changedBy: currentUser.email
-      });
-
-      await updateDoc(linkRef, { url, description, updatedAt: serverTimestamp() });
-
+      await repo.updateLink(linkId, { url, description }, currentUser.email);
       showSuccess('تم تحديث الرابط بنجاح!');
       closeModal('editModal');
       await loadDashboard();
@@ -517,9 +499,8 @@ $('editLinkForm').addEventListener('submit', async (event) => {
 async function toggleLinkStatus(linkId, button) {
   await withBusy(button, '…', async () => {
     try {
-      const snapshot = await getDoc(doc(db, 'links', linkId));
-      await updateDoc(doc(db, 'links', linkId), { active: !snapshot.data().active });
-      showSuccess(snapshot.data().active ? 'تم تعطيل الرابط' : 'تم تفعيل الرابط');
+      const nowActive = await repo.toggleActive(linkId);
+      showSuccess(nowActive ? 'تم تفعيل الرابط' : 'تم تعطيل الرابط');
       await loadDashboard();
     } catch (error) {
       showError('فشل تغيير حالة الرابط: ' + humanError(error));
@@ -530,15 +511,13 @@ async function toggleLinkStatus(linkId, button) {
 async function deleteLink(linkId, button) {
   const confirmed = await confirmDialog(
     'حذف الرابط',
-    `سيُحذف الرابط "${linkId}" نهائيًا مع أرشيف تعديلاته. أي رمز QR مطبوع يشير إليه سيتوقف عن العمل. لا يمكن التراجع.`
+    `سيُحذف الرابط "${linkId}" نهائيًا، وأي رمز QR مطبوع يشير إليه سيتوقف عن العمل. أرشيف تعديلاته يبقى محفوظًا للمراجعة. لا يمكن التراجع.`
   );
   if (!confirmed) return;
 
   await withBusy(button, 'جارٍ الحذف…', async () => {
     try {
-      await deleteDoc(doc(db, 'links', linkId));
-      // مستند meta ليس جزءًا من المستند الأب في Firestore، فحذفه منفصل.
-      await deleteDoc(doc(db, 'links', linkId, 'meta', 'admin')).catch(() => {});
+      await repo.deleteLink(linkId);
       showSuccess('تم حذف الرابط بنجاح!');
       await loadDashboard();
     } catch (error) {
@@ -553,28 +532,22 @@ async function openHistoryModal(linkId, trigger) {
   openModal('historyModal', trigger);
 
   try {
-    const snapshot = await getDocs(
-      query(collection(db, 'links', linkId, 'history'), orderBy('changedAt', 'desc'))
-    );
-
+    const entries = await repo.fetchHistory(linkId);
     list.replaceChildren();
 
-    if (snapshot.empty) {
-      const empty = el('div', 'empty-state');
-      empty.append(icon('history'), el('p', null, 'لا توجد تعديلات سابقة على هذا الرابط.'));
-      list.append(empty);
+    if (!entries.length) {
+      list.append(emptyState('history', 'لا توجد تعديلات سابقة على هذا الرابط.'));
       return;
     }
 
-    snapshot.forEach((docSnap) => {
-      const data = docSnap.data();
+    for (const data of entries) {
       const item = el('div', 'history-item');
       item.append(el('div', 'history-date',
         `${formatTimestamp(data.changedAt)} — بواسطة ${data.changedBy || '—'}`));
       item.append(el('div', 'history-url', data.url || '—'));
       if (data.description) item.append(el('div', 'link-desc', data.description));
       list.append(item);
-    });
+    }
   } catch (error) {
     list.replaceChildren(el('div', 'empty-state', 'فشل تحميل الأرشيف: ' + humanError(error)));
   }
@@ -588,107 +561,4 @@ async function copyToClipboard(text, button) {
     showError('تعذّر النسخ. انسخ الرابط يدويًا.');
   }
   button.focus();
-}
-
-// ---------------------------------------------------------------------------
-// النوافذ المنبثقة — دعم كامل للوحة المفاتيح (البند 10)
-// ---------------------------------------------------------------------------
-
-const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-
-// نداء يُنفَّذ عند إغلاق نافذة بأي طريقة (زر الإغلاق، Escape، النقر خارجها).
-// بدونه كانت نافذة التأكيد تترك وعدها معلّقًا إذا أُغلقت بغير زرّيها.
-const onCloseHandlers = new Map();
-
-function openModal(id, trigger, onClose) {
-  lastFocusedElement = trigger || document.activeElement;
-  if (onClose) onCloseHandlers.set(id, onClose);
-  const modal = $(id);
-  modal.hidden = false;
-  const first = modal.querySelector(FOCUSABLE);
-  if (first) first.focus();
-}
-
-function closeModal(id) {
-  $(id).hidden = true;
-  // إعادة التركيز لموضعه: بدونها يقفز التركيز لأول الصفحة بعد كل إغلاق.
-  if (lastFocusedElement && document.contains(lastFocusedElement)) lastFocusedElement.focus();
-  lastFocusedElement = null;
-
-  const handler = onCloseHandlers.get(id);
-  if (handler) {
-    onCloseHandlers.delete(id);
-    handler();
-  }
-}
-
-function openModalId() {
-  const modal = document.querySelector('.modal:not([hidden])');
-  return modal ? modal.id : null;
-}
-
-document.querySelectorAll('[data-close-modal]').forEach((button) => {
-  button.addEventListener('click', () => closeModal(button.dataset.closeModal));
-});
-
-document.querySelectorAll('.modal').forEach((modal) => {
-  modal.addEventListener('click', (event) => {
-    if (event.target === modal) closeModal(modal.id);
-  });
-});
-
-document.addEventListener('keydown', (event) => {
-  const id = openModalId();
-  if (!id) return;
-
-  if (event.key === 'Escape') {
-    event.preventDefault();
-    closeModal(id);
-    return;
-  }
-
-  // حبس التركيز داخل النافذة: بدونه ينتقل Tab إلى عناصر خلف الطبقة
-  // المعتمة فيعلق مستخدم لوحة المفاتيح.
-  if (event.key === 'Tab') {
-    const items = [...$(id).querySelectorAll(FOCUSABLE)].filter((n) => !n.disabled);
-    if (!items.length) return;
-    const first = items[0];
-    const last = items[items.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
-});
-
-/**
- * نافذة تأكيد بهوية اللوحة بدل confirm() الأصلية التي لا يمكن تنسيقها
- * ولا ترجمة أزرارها.
- */
-function confirmDialog(title, message) {
-  return new Promise((resolve) => {
-    $('confirmTitle').textContent = title;
-    $('confirmMessage').textContent = message;
-
-    let settled = false;
-    const finish = (result) => {
-      if (settled) return;
-      settled = true;
-      $('confirmYes').removeEventListener('click', onYes);
-      $('confirmNo').removeEventListener('click', onNo);
-      resolve(result);
-    };
-
-    const onYes = () => { finish(true); closeModal('confirmModal'); };
-    const onNo = () => { finish(false); closeModal('confirmModal'); };
-
-    $('confirmYes').addEventListener('click', onYes);
-    $('confirmNo').addEventListener('click', onNo);
-
-    // أي إغلاق آخر (Escape، زر ×، نقرة خارج النافذة) يعني "لا".
-    openModal('confirmModal', document.activeElement, () => finish(false));
-  });
 }

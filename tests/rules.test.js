@@ -4,7 +4,7 @@
 //
 // لماذا هذه الاختبارات تحديدًا؟ لأن غيابها هو ما سمح بوصول عطل التحويل
 // إلى الإنتاج: القواعد كانت ترفض زيادة عدّاد النقرات من الزائر، وصفحة
-// التحويل كانت تنتظر تلك الكتابة، فيرى كل زائر صفحة خطأ (البند 9).
+// التحويل كانت تنتظر تلك الكتابة، فيرى كل زائر صفحة خطأ.
 
 import test, { before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
@@ -91,6 +91,13 @@ test('الزائر يقرأ الرابط — التحويل يعتمد عليه'
   await assertSucceeds(getDoc(doc(visitor(), 'links', 'main')));
 });
 
+test('الزائر لا يسرد المجموعة كاملة — المسؤول فقط', async () => {
+  // التحويل يقرأ مستندًا باسمه؛ سرد كل الوجهات والأوصاف لا يحتاجه أحد غير اللوحة
+  await assertFails(getDocs(collection(visitor(), 'links')));
+  await assertFails(getDocs(collection(outsider(), 'links')));
+  await assertSucceeds(getDocs(collection(admin(), 'links')));
+});
+
 // ------------------------- عدّاد النقرات -------------------------
 
 test('الزائر يزيد العدّاد بواحد', async () => {
@@ -111,6 +118,16 @@ test('الزائر لا يستطيع تغيير الوجهة تحت غطاء ا�
 test('الزائر لا يستطيع تضخيم العدّاد دفعة واحدة', async () => {
   await assertFails(updateDoc(doc(visitor(), 'links', 'main'), {
     clicks: increment(1000),
+    lastClicked: serverTimestamp()
+  }));
+});
+
+test('الرابط المعطَّل لا يُعدّ له نقرات', async () => {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), 'links', 'paused'), { ...VALID_LINK, active: false });
+  });
+  await assertFails(updateDoc(doc(visitor(), 'links', 'paused'), {
+    clicks: increment(1),
     lastClicked: serverTimestamp()
   }));
 });
@@ -144,6 +161,30 @@ test('المسؤول لا يستطيع حفظ وصف ضخم', async () => {
     description: 'ا'.repeat(600),
     createdAt: serverTimestamp()
   }));
+});
+
+test('المستند العام لا يقبل حقولًا خارج المسموح', async () => {
+  await assertFails(setDoc(doc(admin(), 'links', 'extra'), {
+    ...VALID_LINK,
+    createdAt: serverTimestamp(),
+    createdBy: ADMIN_EMAIL
+  }));
+  await assertFails(updateDoc(doc(admin(), 'links', 'main'), { notes: 'x'.repeat(100) }));
+});
+
+test('مستند قديم يحمل createdBy يبقى قابلًا للتعديل', async () => {
+  // روابط أُنشئت قبل نقل الإيميل إلى meta/ — لا يلزم ترحيلها لتعديلها
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), 'links', 'legacy'), { ...VALID_LINK, createdBy: ADMIN_EMAIL });
+  });
+  await assertSucceeds(updateDoc(doc(admin(), 'links', 'legacy'), { active: false }));
+});
+
+test('اسم الرابط يُتحقَّق منه في القواعد لا في الواجهة فقط', async () => {
+  const link = { ...VALID_LINK, createdAt: serverTimestamp() };
+  await assertFails(setDoc(doc(admin(), 'links', 'مرحبا'), link));
+  await assertFails(setDoc(doc(admin(), 'links', 'a'.repeat(65)), link));
+  await assertSucceeds(setDoc(doc(admin(), 'links', 'ok_name-1'), link));
 });
 
 test('حساب بنفس الإيميل لكن غير مُفعَّل لا يُعتبر مسؤولًا', async () => {
@@ -186,6 +227,14 @@ test('فحص صلاحية اللوحة ينجح للمسؤول ويفشل لغي
 test('الأرشيف مقروء للمسؤول فقط', async () => {
   await assertFails(getDocs(collection(visitor(), 'links', 'main', 'history')));
   await assertSucceeds(getDocs(collection(admin(), 'links', 'main', 'history')));
+});
+
+test('سجل الأرشيف يحمل المعدِّل الحقيقي ووقت الخادم', async () => {
+  const history = collection(admin(), 'links', 'main', 'history');
+  const entry = { url: 'https://example.com', description: '' };
+  await assertSucceeds(addDoc(history, { ...entry, changedBy: ADMIN_EMAIL, changedAt: serverTimestamp() }));
+  await assertFails(addDoc(history, { ...entry, changedBy: 'someone@else.com', changedAt: serverTimestamp() }));
+  await assertFails(addDoc(history, { ...entry, changedBy: ADMIN_EMAIL, changedAt: new Date(0) }));
 });
 
 test('الأرشيف لا يُعدَّل ولا يُحذف حتى من المسؤول', async () => {

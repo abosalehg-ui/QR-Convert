@@ -30,7 +30,7 @@ service cloud.firestore {
 
     // التحقق من صحة بيانات الرابط عند الكتابة.
     // المتصفح ليس حدًا أمنيًا: قيود <input type="url"> و pattern يمكن تجاوزها
-    // بالكتابة على واجهة Firestore مباشرة، فالتحقق يتكرر هنا عمدًا (البند 5).
+    // بالكتابة على واجهة Firestore مباشرة، فالتحقق يتكرر هنا عمدًا.
     function isValidLink() {
       let d = request.resource.data;
       return d.url is string
@@ -41,40 +41,77 @@ service cloud.firestore {
           && d.clicks is int && d.clicks >= 0;
     }
 
+    // الحقول المسموحة في المستند العام. المستند مقروء للجميع، فأي حقل
+    // إضافي (بأي حجم) يُنشر للعموم.
+    function linkFields() {
+      return ['url', 'description', 'active', 'clicks', 'createdAt', 'lastClicked', 'updatedAt'];
+    }
+
+    // الإنشاء يشترط المجموعة كاملة. التعديل يشترطها على الحقول المتغيرة
+    // فقط، حتى تبقى المستندات القديمة (التي تحمل createdBy مثلًا) قابلة
+    // للتعديل بلا ترحيل.
+    function hasOnlyLinkFields() {
+      return request.resource.data.keys().hasOnly(linkFields());
+    }
+
+    function changesOnlyLinkFields() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(linkFields());
+    }
+
+    // نفس شرط اسم الرابط في الواجهة (isValidLinkName في link-utils.js).
+    function isValidLinkId(linkId) {
+      return linkId.matches('^[a-zA-Z0-9_-]{1,64}$');
+    }
+
     // زيادة عدّاد النقرات من زائر غير مسجّل.
     //
     // بدون هذه القاعدة كانت كتابة العدّاد تُرفض، وصفحة التحويل تنتظرها بـ
-    // await، فتسقط في catch قبل تنفيذ التحويل — أي أن كل زائر يرى صفحة خطأ
-    // (البند 1). القاعدة تسمح بحقلي العدّاد فقط وبزيادة مقدارها واحد، فلا
-    // يستطيع الزائر تغيير الوجهة ولا تضخيم العدّاد دفعة واحدة.
+    // await، فتسقط في catch قبل تنفيذ التحويل — أي أن كل زائر يرى صفحة خطأ.
+    // القاعدة تسمح بحقلي العدّاد فقط وبزيادة مقدارها واحد، فلا يستطيع
+    // الزائر تغيير الوجهة ولا تضخيم العدّاد دفعة واحدة. والرابط المعطَّل لا
+    // يحوّل أحدًا، فلا معنى لعدّ نقراته.
+    //
+    // حد المعدّل (زائر يكرر الطلب في حلقة) لا تملكه القواعد؛ يحتاج
+    // Cloud Function أو App Check. العدّاد إذن مؤشر لا رقم محاسبي.
     function isClickIncrement() {
       let d = request.resource.data;
-      return d.diff(resource.data).affectedKeys().hasOnly(['clicks', 'lastClicked'])
+      return resource.data.active == true
+          && d.diff(resource.data).affectedKeys().hasOnly(['clicks', 'lastClicked'])
           && d.clicks == resource.data.clicks + 1
           && d.lastClicked == request.time;
     }
 
     match /links/{linkId} {
-      // القراءة عامة لأن التحويل يتم من متصفح الزائر بلا مصادقة.
-      // البيانات الإدارية (من أنشأ الرابط) ليست هنا بل في meta/ أدناه (البند 7).
-      allow read: if true;
+      // قراءة مستند بعينه عامة لأن التحويل يتم من متصفح الزائر بلا مصادقة.
+      // أما سرد المجموعة كاملة فللمسؤول وحده: التحويل لا يحتاجه، ولولا
+      // هذا الفصل لسحب أي شخص بالمفتاح العلني كل الوجهات والأوصاف دفعة
+      // واحدة. (التخمين بالاسم يبقى ممكنًا، فالاسم ليس سرًا.)
+      // البيانات الإدارية (من أنشأ الرابط) ليست هنا بل في meta/ أدناه.
+      allow get: if true;
+      allow list: if isAdmin();
 
-      allow create: if isAdmin() && isValidLink();
-      allow update: if isAdmin() && isValidLink();
+      allow create: if isAdmin() && isValidLink() && hasOnlyLinkFields() && isValidLinkId(linkId);
+      allow update: if isAdmin() && isValidLink() && changesOnlyLinkFields();
       allow update: if isClickIncrement();
       allow delete: if isAdmin();
 
       // البيانات الإدارية: إيميل من أنشأ الرابط ووقت الإنشاء.
       // مفصولة عن المستند العام حتى لا تُكشف الإيميلات لأي شخص يقرأ
-      // مجموعة links عبر واجهة Firestore بالمفتاح العلني (البند 7).
+      // مستندات links عبر واجهة Firestore بالمفتاح العلني.
       match /meta/{metaId} {
         allow read, write: if isAdmin();
       }
 
       // أرشيف التعديلات: سجل لا يُعدَّل ولا يُحذف.
+      // المعدِّل ووقت التعديل يُفرضان من المصادقة والخادم، وإلا قبل السجل
+      // "غير القابل للتعديل" اسمًا مزوّرًا من أي مسؤول.
+      // ملاحظة: حذف الرابط لا يحذف أرشيفه (Firestore لا يحذف المجموعات
+      // الفرعية تلقائيًا، وهذه القاعدة تمنع حذفها) — وهذا مقصود.
       match /history/{historyId} {
         allow read: if isAdmin();
-        allow create: if isAdmin();
+        allow create: if isAdmin()
+            && request.resource.data.changedBy == request.auth.token.email
+            && request.resource.data.changedAt == request.time;
         allow update, delete: if false;
       }
     }
