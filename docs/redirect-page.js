@@ -14,7 +14,7 @@ runRedirect({
   },
   onFail(message) {
     // textContent لا innerHTML: الرسالة قد تحوي اسم رابط جاء من عنوان
-    // الصفحة، وهو مدخل يتحكم به الزائر (البند 6).
+    // الصفحة، وهو مدخل يتحكم به الزائر.
     if (failureMessage) failureMessage.textContent = message;
     if (loading) loading.hidden = true;
     if (failure) failure.hidden = false;

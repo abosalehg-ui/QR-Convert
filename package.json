@@ -11,8 +11,8 @@
     "test:e2e": "firebase emulators:exec --project qr-redirect-2e522 --only firestore,auth \"node --test tests/e2e.test.js\""
   },
   "devDependencies": {
-    "@firebase/rules-unit-testing": "^3.0.4",
-    "firebase": "^10.14.1",
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "firebase": "^12.19.0",
     "firebase-tools": "^13.0.0",
     "playwright": "^1.49.1"
   }

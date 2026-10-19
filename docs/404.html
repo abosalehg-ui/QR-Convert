@@ -20,8 +20,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap">
-    <link rel="stylesheet" href="./shared.css">
-    <link rel="stylesheet" href="./redirect.css">
+    <!-- مسارات مطلقة عمدًا لا ./ : هذه الصفحة تُخدَم لأي مسار، منها
+         /QR-Convert/main/ و /QR-Convert/a/b، والمسار النسبي يُحسب حينها
+         من ذلك المجلد الوهمي فيرجع 404.html نفسها بدل الملف وتعلق الصفحة.
+         (<base href> بديل ممكن لكنه يتطلب إرخاء base-uri في CSP.)
+         عند النقل إلى نطاق مخصص جذره / : استبدل /QR-Convert/ بـ / هنا. -->
+    <link rel="stylesheet" href="/QR-Convert/shared.css">
+    <link rel="stylesheet" href="/QR-Convert/redirect.css">
 </head>
 <body>
     <!--
@@ -63,11 +68,11 @@
         <p id="failure-message"></p>
 
         <div class="buttons">
-            <a href="./" class="btn btn-quiet">
+            <a href="/QR-Convert/" class="btn btn-quiet">
                 <svg class="icon" aria-hidden="true"><use href="#i-home"/></svg>
                 الصفحة الرئيسية
             </a>
-            <a href="./admin.html" class="btn btn-quiet">
+            <a href="/QR-Convert/admin.html" class="btn btn-quiet">
                 <svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg>
                 لوحة التحكم
             </a>
@@ -85,6 +90,6 @@
         <p class="footer">QR Redirect • Firebase &amp; GitHub Pages</p>
     </div>
 
-    <script type="module" src="./redirect-page.js"></script>
+    <script type="module" src="/QR-Convert/redirect-page.js"></script>
 </body>
 </html>

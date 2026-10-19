@@ -17,15 +17,28 @@ export const FIRESTORE_REST =
   `http://127.0.0.1:8080/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 export const AUTH_REST = 'http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1';
 
+// المسار الذي يخدم منه GitHub Pages الموقع (github.io/QR-Convert/).
+export const SITE_PREFIX = '/QR-Convert';
+
 /**
  * خادم ثابت يخدم كل مسار غير موجود من 404.html — تمامًا كما يفعل
  * GitHub Pages، وهو سلوك جوهري للاختبار لأن كل الروابط الفرعية تمر منه.
+ *
+ * الموقع تحت SITE_PREFIX لا تحت الجذر، مثل الإنتاج: خدمته من / كانت تخفي
+ * عطل المسارات النسبية في 404.html (رابط مثل /main/ يعلق للأبد).
  */
 export function startSite(port = 4173) {
   const server = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://x');
-    let file = path.join(DOCS, url.pathname === '/' ? 'index.html' : url.pathname);
-    if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) {
+    if (url.pathname === SITE_PREFIX) {
+      res.writeHead(301, { Location: SITE_PREFIX + '/' });
+      res.end();
+      return;
+    }
+    const inside = url.pathname.startsWith(SITE_PREFIX + '/');
+    const rel = inside ? url.pathname.slice(SITE_PREFIX.length) : null;
+    let file = rel && path.join(DOCS, rel === '/' ? 'index.html' : rel);
+    if (!file || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
       file = path.join(DOCS, '404.html');
       res.statusCode = 404;
     }

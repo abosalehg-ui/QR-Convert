@@ -513,15 +513,14 @@ background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%);
 
 **تحقق من:**
 
-1. Firestore Rules تسمح بالكتابة للجميع (للروابط فقط):
-```javascript
-match /links/{linkId} {
-  allow read: if true;  // ← مهم!
-  allow write: if isAdmin();
-}
-```
+1. أن `firestore.rules` المنشورة على Firebase هي نفس الملف في المستودع.
+   القواعد المعتمدة هي [`firestore.rules`](./firestore.rules) وحدها —
+   **لا تنسخ قواعد من أي ملف توثيق**. القاعدة التي تسمح بالعدّ هي
+   `isClickIncrement()`، وتسمح للزائر بزيادة العدّاد بواحد فقط.
+2. أن الرابط **نشط**: الرابط المعطَّل لا يحوّل أحدًا، فلا تُعدّ نقراته.
+3. شغّل `npm run test:rules` بعد أي تعديل على القواعد وقبل نشرها.
 
-2. JavaScript لا يوجد به أخطاء (افتح Console)
+العدّاد مؤشر لا رقم محاسبي: لا حد للمعدّل في القواعد (راجع `SECURITY.md`).
 
 ---
 
